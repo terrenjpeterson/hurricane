@@ -67,7 +67,8 @@ function onLaunch(launchRequest, session, callback) {
 }
 
 /**
- * Called when the user specifies an intent for this skill.
+ * Called when the user specifies an intent for this skill. This drives
+ * the main logic for the function.
  */
 function onIntent(intentRequest, session, callback) {
     console.log("onIntent requestId=" + intentRequest.requestId +
@@ -77,7 +78,11 @@ function onIntent(intentRequest, session, callback) {
         intentName = intentRequest.intent.name;
 
     // Dispatch to your skill's intent handlers
-    if ("MyColorIsIntent" === intentName) {
+    if ("ListStormNames" === intentName) {
+        getStormNames(intent, session, callback);
+    } else if ("SetOceanPreference" === intentName) {
+        setOceanInSession(intent, session, callback);
+    } else if ("MyColorIsIntent" === intentName) {
         setColorInSession(intent, session, callback);
     } else if ("WhatsMyColorIntent" === intentName) {
         getColorFromSession(intent, session, callback);
@@ -106,12 +111,12 @@ function getWelcomeResponse(callback) {
     // If we wanted to initialize the session to have some attributes we could add those here.
     var sessionAttributes = {};
     var cardTitle = "Welcome";
-    var speechOutput = "Welcome to the Alexa Skills Kit sample. " +
-        "Please tell me your favorite color by saying, my favorite color is red";
+    var speechOutput = "Welcome to the Hurricane Center. " +
+        "Please tell me what you would like to hear information about";
     // If the user either does not reply to the welcome message or says something that is not
     // understood, they will be prompted again with this text.
-    var repromptText = "Please tell me your favorite color by saying, " +
-        "my favorite color is red";
+    var repromptText = "Please tell me how I can help you by saying phrases like, " +
+        "list next storm names for the Atlantic";
     var shouldEndSession = false;
 
     callback(sessionAttributes,
@@ -125,6 +130,34 @@ function handleSessionEndRequest(callback) {
     var shouldEndSession = true;
 
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, null, shouldEndSession));
+}
+
+/**
+ * Sets the ocean in the session and prepares the speech to reply to the user.
+ */
+function setOceanInSession(intent, session, callback) {
+    var cardTitle = intent.name;
+    var preferredOcean = intent.slots.Ocean;
+    var repromptText = "";
+    var sessionAttributes = {};
+    var shouldEndSession = false;
+    var speechOutput = "";
+
+    console.log("preferred ocean : " + preferredOcean)
+
+    if ("Atlantic" == preferredOcean.value || "Pacific" == preferredOcean.value) {
+        var ocean = preferredOcean.value;
+        sessionAttributes = storeOceanAttributes(ocean);
+        speechOutput = "Okay. My understanding is that you want information on the " + ocean + " ocean.";
+        repromptText = "Here is the storm information for the " + ocean + " ocean.";
+    } else {
+        speechOutput = "I'm not sure which ocean you are looking for. Please try again";
+        repromptText = "I'm not sure which ocean you want information on. " +
+            "Please say either Atlantic or Pacific.";
+    }
+
+    callback(sessionAttributes,
+         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
 }
 
 /**
@@ -158,6 +191,36 @@ function createFavoriteColorAttributes(favoriteColor) {
     return {
         favoriteColor: favoriteColor
     };
+}
+
+function storeOceanAttributes(ocean) {
+    return {
+        ocean: ocean
+    };
+}
+
+function getStormNames(intent, session, callback) {
+    var oceanPreference;
+    var repromptText = null;
+    var sessionAttributes = {};
+    var shouldEndSession = false;
+    var speechOutput = "";
+
+    if (session.attributes) {
+        oceanPreference = session.attributes.ocean;
+    }
+
+    if (oceanPreference) {
+        speechOutput = "Your ocean preference is " + oceanPreference;
+    } else {
+        speechOutput = "Which ocean would you like details for, please say, Atlantic Ocean or Pacific Ocean";
+    }
+
+    // Setting repromptText to null signifies that we do not want to reprompt the user.
+    // If the user does not respond or says something that is not understood, the session
+    // will end.
+    callback(sessionAttributes,
+         buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
 }
 
 function getColorFromSession(intent, session, callback) {
