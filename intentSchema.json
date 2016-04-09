@@ -1,0 +1,37 @@
+{
+  "intents": [
+    {
+      "intent": "ListStormNames"
+    },
+    {
+      "intent": "SetOceanPreference",
+      "slots": [
+        {
+          "name": "Ocean",
+          "type": "LIST_OF_OCEANS"
+        }
+      ]
+    },
+    {
+      "intent": "AMAZON.StartOverIntent"
+    },
+    {
+      "intent": "AMAZON.RepeatIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.YesIntent"
+    },
+    {
+      "intent": "AMAZON.NoIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
+}
