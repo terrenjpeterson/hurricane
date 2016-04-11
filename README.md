@@ -10,7 +10,8 @@ handler functions (event, context)
 - onSessionEnded - called when the user ends the session.
 
 skill functions
-| intent | function |
+
+| Intent | Function |
 |----------|--------|
 | ListStormNames | getStormNames |
 | SetOceanPreference | setOceanInSession |
