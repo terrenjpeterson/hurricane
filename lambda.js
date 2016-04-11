@@ -5,6 +5,69 @@
  *
  */
 
+// Get this years storm names
+
+var atlanticStorms = [
+    {
+        "stormYear": 2016,
+        "stormNames": [
+            "Alex", 
+            "Bonnie", 
+            "Colin",
+            "Danielle",
+            "Earl",
+            "Fiona",
+            "Gaston",
+            "Hermine",
+            "Ian",
+            "Julia",
+            "Karl",
+            "Lisa",
+            "Matthew",
+            "Nicole",
+            "Otto",
+            "Paula",
+            "Richard",
+            "Shary",
+            "Tobias",
+            "Virginie",
+            "Walter"
+        ]
+    }
+];
+
+var pacificStorms = [
+    {
+        "stormYear": 2016,
+        "stormNames": [
+            "Agatha", 
+            "Blas", 
+            "Celia",
+            "Darby",
+            "Estelle",
+            "Frank",
+            "Georgette",
+            "Howard",
+            "Ivette",
+            "Javier",
+            "Kay",
+            "Lester",
+            "Madeline",
+            "Newton",
+            "Orlene",
+            "Paine",
+            "Roslyn",
+            "Seymour",
+            "Tina",
+            "Virgil",
+            "Winifred",
+            "Xavier",
+            "Yolanda",
+            "Zeke"
+        ]
+    }
+];
+
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
 exports.handler = function (event, context) {
@@ -218,11 +281,18 @@ function getThisYearStorm(intent, session, callback) {
             "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
     else {
         speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";
-        if (oceanPreference == "Atlantic")
-            speechOutput = speechOutput + "Alex, Bonnie, Colin, Danielle, and Earl. ";
+        if (oceanPreference == "Atlantic") 
+            currentYearStorms = atlanticStorms[0];
         else
-            speechOutput = speechOutput + "Agatha, Blas, Celia, Darby, and Estelle. ";
+            currentYearStorms = pacificStorms[0];
             
+        speechOutput = speechOutput + 
+            currentYearStorms.stormNames[0] + ", " +
+            currentYearStorms.stormNames[1] + ", " +
+            currentYearStorms.stormNames[2] + ", " +
+            currentYearStorms.stormNames[3] + ", and " +
+            currentYearStorms.stormNames[4] + ". ";
+
         speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms";
     }
     
@@ -236,6 +306,29 @@ function getCompleteList(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
+
+    console.log("session attributes: " + sessionAttributes);
+
+    if (session.attributes) {
+        oceanPreference = session.attributes.ocean;
+    }
+    
+    // first check to make sure an ocean has been selected, and if so list all of the storm names for it
+
+    if (oceanPreference == null)
+        speechOutput = "If you would like to hear this years storm names" +
+            "please first let me know which set by saying Atlantic Ocean or Pacific Ocean";
+    else {
+        speechOutput = speechOutput + "The 2016 storm names for the " + oceanPreference + " Ocean will be ";
+        if (oceanPreference == "Atlantic") 
+            currentYearStorms = atlanticStorms[0];
+        else
+            currentYearStorms = pacificStorms[0];
+        
+        for (i = 0; i < currentYearStorms.stormNames.length; i++) { 
+            speechOutput = speechOutput + currentYearStorms.stormNames[i] + ", ";
+        }
+    }
     
     callback(sessionAttributes,
          buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
