@@ -13,6 +13,15 @@
       ]
     },
     {
+      "intent": "StormsFromPriorYears" 
+    },
+    {
+      "intent": "ThisYearsStorms"
+    },
+    {
+      "intent": "CompleteListOfStorms"
+    },
+    {
       "intent": "AMAZON.StartOverIntent"
     },
     {

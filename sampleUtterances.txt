@@ -3,6 +3,15 @@ AMAZON.StartOverIntent begin
 AMAZON.StartOverIntent new
 
 ListStormNames list storm names
-ListStormNames this years storms
 
 SetOceanPreference {Ocean} ocean
+
+StormsFromPriorYears storms from prior years
+StormsFromPriorYears from prior years
+StormsFromPriorYears storms from last year
+
+ThisYearsStorms this years storms
+ThisYearsStorms storms for this year
+
+CompleteListOfStorms complete list of this years storms
+CompleteListOfStorms complete list
