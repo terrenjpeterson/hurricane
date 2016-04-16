@@ -5,6 +5,8 @@
  *
  */
 
+var aws = require('aws-sdk');
+
 // Get this years storm names
 
 var atlanticStorms = [
@@ -200,7 +202,7 @@ function handleSessionEndRequest(callback) {
  * Sets the ocean in the session and prepares the speech to reply to the user.
  */
 function setOceanInSession(intent, session, callback) {
-    var cardTitle = intent.name;
+    var cardTitle = "Hurricane Center";
     var preferredOcean = intent.slots.Ocean;
     var repromptText = "";
     var sessionAttributes = {};
@@ -209,7 +211,7 @@ function setOceanInSession(intent, session, callback) {
 
     console.log("preferred ocean : " + preferredOcean);
 
-    if ("atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
+    if ("Atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
         var ocean = preferredOcean.value;
         sessionAttributes = storeOceanAttributes(ocean);
         speechOutput = "Okay. My understanding is that you want information on the " + ocean + " ocean. " +
@@ -240,6 +242,7 @@ function getStormNames(intent, session, callback) {
     var sessionAttributes = {};
     var shouldEndSession = false;
     var speechOutput = "";
+    var cardTitle = "Hurricane Center";
 
     console.log("session attributes: " + sessionAttributes);
 
@@ -254,7 +257,7 @@ function getStormNames(intent, session, callback) {
     }
 
     callback(sessionAttributes,
-         buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
 }
 
 function getWhichYear(intent, session, callback) {
@@ -262,25 +265,65 @@ function getWhichYear(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
+    var repromptText = "";
+    var cardTitle = "Storm History";
 
     console.log("session attributes: " + JSON.stringify(session.attributes));
     console.log("intent attributes: " + JSON.stringify(intent.slots.Date));
 
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
-        if (requestYear > 2000 && requestYear < 2016)
-            speechOutput = "Okay, I'm getting storm history for " + requestYear;
-        else
+        if (requestYear > 2000 && requestYear < 2016) {
+            
+            var s3 = new aws.S3();
+    
+            var getParams = {Bucket : 'hurricane-data', 
+                             Key : 'stormHistoryAtlantic.json'}; 
+
+            console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+
+            s3.getObject(getParams, function(err, data) {
+                if(err)
+                    console.log('Error getting history data : ' + err)
+                else {
+                    console.log('Successfully retrieved history data : ');
+
+                    // data retrieval was successfull - now parse through it and provide back in the reponse.
+                    
+                    var stormHistoryArray = data.Body;
+                    
+                    console.log('data retrieved: ' + stormHistoryArray);
+            
+                    speechOutput = "Okay, I'm getting storm history for " + requestYear;
+
+                    callback(sessionAttributes,
+                        buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+                };
+            });
+            
+        } else {
+            console.log('Year selected for storm history outside of available data');
+
             speechOutput = "Sorry, I don't have information for " + requestYear;
+
+            repromptText = "Please state a year between 1995 and 2016. " +
+                "For example, say Storms for 2012.";
+
+            callback(sessionAttributes,
+                buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+            };
         }
-    else
+    else {
+        console.log('No year provided for storm history');
+        
         speechOutput = "Which year would you like storm history for?";
 
-    repromptText = "Please state a year you would like to hear storm history for. " +
-        "For example say Storms for 2012.";
+        repromptText = "Please state a year you would like to hear storm history for. " +
+            "For example say Storms for 2012.";
 
-    callback(sessionAttributes,
-         buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+    }
 }
 
 function getThisYearStorm(intent, session, callback) {
@@ -332,6 +375,7 @@ function getCompleteList(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
+    var cardTitle = "Storm Inventory";
 
     console.log("session attributes: " + sessionAttributes);
 
@@ -357,7 +401,7 @@ function getCompleteList(intent, session, callback) {
     }
     
     callback(sessionAttributes,
-         buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
 }
 
 // --------------- Helpers that build all of the responses -----------------------
