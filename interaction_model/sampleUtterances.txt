@@ -9,6 +9,7 @@ SetOceanPreference {Ocean} ocean
 StormsFromPriorYears storms from prior years
 StormsFromPriorYears from prior years
 StormsFromPriorYears storms from last year
+StormsFromPriorYears storms from {Date}
 
 ThisYearsStorms this years storms
 ThisYearsStorms storms for this year

@@ -176,11 +176,11 @@ function getWelcomeResponse(callback) {
     var cardTitle = "Welcome";
     var speechOutput = "Welcome to the Hurricane Center, the best source for information " +
         "related to tropical storms, past or present. " +
-        "Please ask me what you would like to hear information about";
+        "Please ask me what you would like to hear information about.";
     // If the user either does not reply to the welcome message or says something that is not
     // understood, they will be prompted again with this text.
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
-        "list next storm names for the Atlantic";
+        "list storm names or hurricane records.";
     var shouldEndSession = false;
 
     callback(sessionAttributes,
@@ -209,7 +209,7 @@ function setOceanInSession(intent, session, callback) {
 
     console.log("preferred ocean : " + preferredOcean);
 
-    if ("Atlantic" == preferredOcean.value || "Pacific" == preferredOcean.value) {
+    if ("atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
         var ocean = preferredOcean.value;
         sessionAttributes = storeOceanAttributes(ocean);
         speechOutput = "Okay. My understanding is that you want information on the " + ocean + " ocean. " +
@@ -257,6 +257,32 @@ function getStormNames(intent, session, callback) {
          buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
 }
 
+function getWhichYear(intent, session, callback) {
+    var oceanPreference;
+    var shouldEndSession = false;
+    var sessionAttributes = {};
+    var speechOutput = "";
+
+    console.log("session attributes: " + JSON.stringify(session.attributes));
+    console.log("intent attributes: " + JSON.stringify(intent.slots.Date));
+
+    if (intent.slots.Date.value) {
+        requestYear = intent.slots.Date.value;
+        if (requestYear > 2000 && requestYear < 2016)
+            speechOutput = "Okay, I'm getting storm history for " + requestYear;
+        else
+            speechOutput = "Sorry, I don't have information for " + requestYear;
+        }
+    else
+        speechOutput = "Which year would you like storm history for?";
+
+    repromptText = "Please state a year you would like to hear storm history for. " +
+        "For example say Storms for 2012.";
+
+    callback(sessionAttributes,
+         buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
+}
+
 function getThisYearStorm(intent, session, callback) {
     var oceanPreference;
     var repromptText = null;
@@ -277,7 +303,7 @@ function getThisYearStorm(intent, session, callback) {
     speechOutput = "There aren't any active storms yet for this year. ";
     
     if (oceanPreference == null)
-        speechOutput = speechOutput + "If you would like to hear this years storm names" +
+        speechOutput = speechOutput + "If you would like to hear this years storm names " +
             "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
     else {
         speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";

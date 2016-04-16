@@ -13,7 +13,13 @@
       ]
     },
     {
-      "intent": "StormsFromPriorYears" 
+      "intent": "StormsFromPriorYears",
+      "slots": [
+        {
+          "name": "Date",
+          "type": "AMAZON.DATE"
+        }
+      ]
     },
     {
       "intent": "ThisYearsStorms"
