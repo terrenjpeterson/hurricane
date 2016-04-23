@@ -310,6 +310,7 @@ function getWhichYear(intent, session, callback) {
 
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
+        cardTitle = "Storm History for " + requestYear;
         if (requestYear > 2004 && requestYear < 2016) {
             
             var s3 = new aws.S3();
@@ -411,6 +412,7 @@ function getThisYearStorm(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
+    var cardTitle = "Storm Information for 2016";
 
     console.log("session attributes: " + sessionAttributes);
 
@@ -504,7 +506,7 @@ function getStormDetail(intent, session, callback) {
     var cardTitle = "Storm Details";
 
     // this is used to process if the name passed in has available detail
-    var stormDetailAvail = ["Danny", "Katrina"];
+    var stormDetailAvail = ["Danny", "Katrina", "Sandy", "Irene", "Ike"];
     var stormDetailExists = false;
 
     var stormName = intent.slots.Storm.value;
@@ -512,7 +514,7 @@ function getStormDetail(intent, session, callback) {
     //console.log("session attributes: " + sessionAttributes);
 
     for (i = 0; i < stormDetailAvail.length ; i++) {
-        if (stormDetailAvail[i] == stormName)
+        if (stormDetailAvail[i].toLowerCase() == stormName.toLowerCase())
             stormDetailExists = true;
     }
 
@@ -537,19 +539,23 @@ function getStormDetail(intent, session, callback) {
                     
                 var historyArray = eval('(' + data.Body + ')');
 
-                // parse through the history and find the data for the requested year
+                // parse through the history and find the data for the requested storm
                 for (j = 0; j < historyArray.length; j++) {
                     //console.log('year: ' + historyArray[j].stormYear);
                     for (k = 0; k <historyArray[j].storms.length; k++) {
                         //console.log('detail: ' + JSON.stringify(historyArray[j].storms[k]));
-                        if (historyArray[j].storms[k].stormName == stormName && historyArray[j].storms[k].scale != null)
+                        if (historyArray[j].storms[k].stormName == stormName && historyArray[j].storms[k].scale != null) {
                             stormDetail = historyArray[j].storms[k];
+                            stormDetail.year = historyArray[j].stormYear;
+                        }
                     }
                 }
                 
-                console.log('Storm Detail: ' + JSON.stringify(stormDetail));
+                //console.log('Storm Detail: ' + JSON.stringify(stormDetail));
                 
-                var speechOutput = stormDetail.stormType + " " + stormDetail.stormName +
+                // taking the returned object, build the response string that will be returned to the user
+                
+                var speechOutput = "In " + stormDetail.year + ", " + stormDetail.stormType + " " + stormDetail.stormName +
                     " was a " + stormDetail.scale + " hurricane with peak winds of " +
                     stormDetail.peakWinds + " miles per hour. ";
                     
