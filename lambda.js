@@ -222,9 +222,7 @@ function handleSessionEndRequest(callback) {
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, null, shouldEndSession));
 }
 
-/**
- * Sets the ocean in the session and prepares the speech to reply to the user.
- */
+// Sets the ocean in the session and prepares the speech to reply to the user.
 function setOceanInSession(intent, session, callback) {
     var cardTitle = "Hurricane Center";
     var preferredOcean = intent.slots.Ocean;
@@ -257,6 +255,7 @@ function storeOceanAttributes(ocean) {
     };
 }
 
+// Sets the ocean name in case it has not done so already
 function getStormNames(intent, session, callback) {
     var oceanPreference;
     // Setting repromptText to null signifies that we do not want to reprompt the user.
@@ -285,6 +284,9 @@ function getStormNames(intent, session, callback) {
          buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
 }
 
+// This function returns storm history. It checks to make sure that the year one where data
+// can be provided back, and if so pulls it from an S3 bucket. The data is parsed and a response
+// is formatted
 function getWhichYear(intent, session, callback) {
     var oceanPreference;
     var shouldEndSession = false;
@@ -402,6 +404,8 @@ function getThisYearStorm(intent, session, callback) {
     if (oceanPreference == null)
         speechOutput = speechOutput + "If you would like to hear this years storm names " +
             "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
+        repromptText = "Please let me know which ocean you would like to hear storm data " +
+            "for by saying Atlantic Ocean or Pacific Ocean";
     else {
         speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";
         if (oceanPreference == "Atlantic") 
@@ -417,6 +421,10 @@ function getThisYearStorm(intent, session, callback) {
             currentYearStorms.stormNames[4] + ". ";
 
         speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms";
+
+        repromptText = "Would you like more information? If you would like a complete list of this years " +
+            "storms, say Complete list of this years storms. If you would like storm history from prior years " +
+            "please say Storm History."
     }
     
     callback(sessionAttributes,
@@ -425,7 +433,7 @@ function getThisYearStorm(intent, session, callback) {
 
 function getCompleteList(intent, session, callback) {
     var oceanPreference;
-    var repromptText = null;
+    var repromptText = "";
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
@@ -440,10 +448,12 @@ function getCompleteList(intent, session, callback) {
     
     // first check to make sure an ocean has been selected, and if so list all of the storm names for it
 
-    if (oceanPreference == null)
+    if (oceanPreference == null) {
         speechOutput = "If you would like to hear this years storm names " +
             "please first let me know which set by saying Atlantic Ocean or Pacific Ocean";
-    else {
+        repromptText = "Please let me know which storm I can provide information on by saying " +
+            "Atlantic Ocean or Pacific Ocean.";
+    } else {
         speechOutput = speechOutput + "The 2016 storm names for the " + oceanPreference + " Ocean will be ";
         if (oceanPreference == "Atlantic") 
             currentYearStorms = atlanticStorms[0];
@@ -453,6 +463,8 @@ function getCompleteList(intent, session, callback) {
         for (i = 0; i < currentYearStorms.stormNames.length; i++) { 
             speechOutput = speechOutput + currentYearStorms.stormNames[i] + ", ";
         }
+        repromptText = "Would you like to hear storm information about prior years storms? If so " +
+            "please say Storm History.";
     }
     
     callback(sessionAttributes,
@@ -469,8 +481,8 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
         },
         card: {
             type: "Simple",
-            title: "SessionSpeechlet - " + title,
-            content: "SessionSpeechlet - " + output
+            title: title,
+            content: output
         },
         reprompt: {
             outputSpeech: {
