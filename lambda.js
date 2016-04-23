@@ -1,4 +1,4 @@
-/**
+**
  * This sample demonstrates a simple skill built with the Amazon Alexa Skills Kit.
  * The Intent Schema, Custom Slots, and Sample Utterances for this skill, as well as
  * testing instructions are located at http://amzn.to/1LzFrj6
@@ -140,7 +140,7 @@ function onIntent(intentRequest, session, callback) {
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
 
-    // Dispatch to your skill's intent handlers
+    // Dispatch to the individual skill handlers
     if ("ListStormNames" === intentName) {
         getStormNames(intent, session, callback);
     } else if ("SetOceanPreference" === intentName) {
@@ -171,7 +171,6 @@ function onIntent(intentRequest, session, callback) {
 function onSessionEnded(sessionEndedRequest, session) {
     console.log("onSessionEnded requestId=" + sessionEndedRequest.requestId +
         ", sessionId=" + session.sessionId);
-    // Add cleanup logic here
 }
 
 // --------------- Base Functions that are invoked based on standard utterances -----------------------
@@ -182,12 +181,13 @@ function getWelcomeResponse(callback) {
     var sessionAttributes = {};
     var cardTitle = "Welcome";
     var speechOutput = "Welcome to the Hurricane Center, the best source for information " +
-        "related to tropical storms, past or present. " +
-        "Please ask me what you would like to hear information about.";
+        "related to tropical storms, past or present. Please begin by asking me " +
+        "about current storms for 2016 or storms for prior years.";
+        
     // If the user either does not reply to the welcome message or says something that is not
     // understood, they will be prompted again with this text.
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
-        "list storm names or storm history.";
+        "list storm names or storm history for 2012.";
     var shouldEndSession = false;
 
     callback(sessionAttributes,
@@ -203,6 +203,7 @@ function getHelpResponse(callback) {
         "If you would like to hear about storms from this year, say What are storms from this year. " +
         "For information related to storms from prior years, please say What is the storm history " +
         "for a specific year.";
+        
     // if the user still does not respond, they will be prompted with this additional information
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
         "list storm names or storm history.";
@@ -261,7 +262,6 @@ function getStormNames(intent, session, callback) {
     // Setting repromptText to null signifies that we do not want to reprompt the user.
     // If the user does not respond or says something that is not understood, the session
     // will end.
-    var repromptText = null;
     var sessionAttributes = {};
     var shouldEndSession = false;
     var speechOutput = "";
@@ -276,8 +276,11 @@ function getStormNames(intent, session, callback) {
     if (oceanPreference) {
         speechOutput = "Your ocean preference is " + oceanPreference;
         sessionAttributes = storeOceanAttributes(oceanPreference);
+        repromptText = "What would you like to do next";
     } else {
         speechOutput = "Which ocean would you like details for, please say, Atlantic Ocean or Pacific Ocean";
+        repromptText = "Please let me know which ocean you would like details " +
+            "by saying Atlantic Ocean or Pacific Ocean";
     }
 
     callback(sessionAttributes,
@@ -350,6 +353,8 @@ function getWhichYear(intent, session, callback) {
                     stormReading = stormReading + '.';
 
                     speechOutput = stormReading;
+                    
+                    repromptText = "Would you like to hear information about another year?";
 
                     callback(sessionAttributes,
                         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
@@ -401,12 +406,12 @@ function getThisYearStorm(intent, session, callback) {
     // if there are no active storms, provide what the names will be
     speechOutput = "There aren't any active storms yet for this year. ";
     
-    if (oceanPreference == null)
+    if (oceanPreference == null) {
         speechOutput = speechOutput + "If you would like to hear this years storm names " +
             "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
         repromptText = "Please let me know which ocean you would like to hear storm data " +
             "for by saying Atlantic Ocean or Pacific Ocean";
-    else {
+    } else {
         speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";
         if (oceanPreference == "Atlantic") 
             currentYearStorms = atlanticStorms[0];
@@ -431,6 +436,7 @@ function getThisYearStorm(intent, session, callback) {
          buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
 }
 
+// this function prepares the response when the user requests a full list of storm names
 function getCompleteList(intent, session, callback) {
     var oceanPreference;
     var repromptText = "";
