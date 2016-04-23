@@ -193,7 +193,7 @@ function getWelcomeResponse(callback) {
     var shouldEndSession = false;
 
     callback(sessionAttributes,
-        buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
 // this is the function that gets called to format the response to the user when they ask for help
@@ -212,7 +212,7 @@ function getHelpResponse(callback) {
     var shouldEndSession = false;
 
     callback(sessionAttributes,
-        buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
 // this is the function that gets called to format the response when the user is done
@@ -222,7 +222,7 @@ function handleSessionEndRequest(callback) {
     // Setting this to true ends the session and exits the skill.
     var shouldEndSession = true;
 
-    callback({}, buildSpeechletResponse(cardTitle, speechOutput, null, shouldEndSession));
+    callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, shouldEndSession));
 }
 
 // Sets the ocean in the session and prepares the speech to reply to the user.
@@ -249,7 +249,7 @@ function setOceanInSession(intent, session, callback) {
     }
 
     callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
 function storeOceanAttributes(ocean) {
@@ -286,7 +286,7 @@ function getStormNames(intent, session, callback) {
     }
 
     callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
 // This function returns storm history. It checks to make sure that the year one where data
@@ -297,6 +297,7 @@ function getWhichYear(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
+    var cardOutput = "";
     var repromptText = "";
     var cardTitle = "Storm History";
 
@@ -354,6 +355,8 @@ function getWhichYear(intent, session, callback) {
                     for (i = 0; i < stormHistoryArray.storms.length; i++) {
                         stormReading = stormReading + stormHistoryArray.storms[i].stormType + 
                             ' ' + stormHistoryArray.storms[i].stormName + ', ';
+                        cardOutput = cardOutput + stormHistoryArray.storms[i].stormType +
+                            ' ' + stormHistoryArray.storms[i].stormName + '\n ';
                         if (stormHistoryArray.storms[i].scale != null) {
                             console.log('more data available on ' + stormHistoryArray.storms[i].stormName);
                             moreStormData.push(stormHistoryArray.storms[i]);
@@ -365,7 +368,8 @@ function getWhichYear(intent, session, callback) {
                     speechOutput = stormReading;
                     
                     for (i = 0; i < moreStormData.length; i++) {
-                        console.log('storm data on : ' + JSON.stringify(moreStormData[i]))
+                        cardOutput = cardOutput + 'More data available on ' + stormHistoryArray.storms[i].stormName + '\n';
+                        //console.log('storm data on : ' + JSON.stringify(moreStormData[i]))
                     }
                     
                     if (moreStormData.length == 0)
@@ -377,7 +381,7 @@ function getWhichYear(intent, session, callback) {
                     }
 
                     callback(sessionAttributes,
-                        buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
                 };
             });
             
@@ -390,7 +394,7 @@ function getWhichYear(intent, session, callback) {
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
-                buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+                buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
             };
         }
     else {
@@ -402,7 +406,7 @@ function getWhichYear(intent, session, callback) {
             "For example say Storms for 2012.";
 
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
     }
 }
 
@@ -454,7 +458,7 @@ function getThisYearStorm(intent, session, callback) {
     }
     
     callback(sessionAttributes,
-         buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
 // this function prepares the response when the user requests a full list of storm names
@@ -496,7 +500,7 @@ function getCompleteList(intent, session, callback) {
     }
     
     callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
 // this function provides details about a particular storm
@@ -504,6 +508,7 @@ function getStormDetail(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var cardTitle = "Storm Details";
+    var cardOutput = "";
 
     // this is used to process if the name passed in has available detail
     var stormDetailAvail = ["Danny", "Katrina", "Sandy", "Irene", "Ike"];
@@ -511,6 +516,8 @@ function getStormDetail(intent, session, callback) {
 
     var stormName = intent.slots.Storm.value;
 
+    console.log("storm name: " + stormName);
+    
     //console.log("session attributes: " + sessionAttributes);
 
     for (i = 0; i < stormDetailAvail.length ; i++) {
@@ -541,10 +548,11 @@ function getStormDetail(intent, session, callback) {
 
                 // parse through the history and find the data for the requested storm
                 for (j = 0; j < historyArray.length; j++) {
-                    //console.log('year: ' + historyArray[j].stormYear);
+                    console.log('year: ' + historyArray[j].stormYear);
                     for (k = 0; k <historyArray[j].storms.length; k++) {
                         //console.log('detail: ' + JSON.stringify(historyArray[j].storms[k]));
-                        if (historyArray[j].storms[k].stormName == stormName && historyArray[j].storms[k].scale != null) {
+                        if (historyArray[j].storms[k].stormName.toLowerCase() == stormName.toLowerCase() && historyArray[j].storms[k].scale != null) {
+                            console.log('found match');
                             stormDetail = historyArray[j].storms[k];
                             stormDetail.year = historyArray[j].stormYear;
                         }
@@ -562,6 +570,12 @@ function getStormDetail(intent, session, callback) {
                 var speechOutput = speechOutput + stormDetail.stormName + " formed in the Atlantic Ocean " +
                     "as a Tropical Storm on " + stormDetail.tropStormStart + " and became a hurricane on " +
                     stormDetail.hurrStart + ". ";
+
+                var cardTitle = stormDetail.year + " " + stormDetail.stormType + " " + stormDetail.stormName;
+                    
+                var cardOutput = "Became a Tropical Storm on " + stormDetail.tropStormStart + "\n" +
+                    "Became a Hurricane on " + stormDetail.hurrStart + "\n" +
+                    "Top Wind Speed : " + stormDetail.peakWinds + "\n";
                     
                 if (stormDetail.landfall)
                     speechOutput = speechOutput + "It made initial landfall hitting " + stormDetail.initialLandfallLocation + ". ";
@@ -573,12 +587,13 @@ function getStormDetail(intent, session, callback) {
                 if (stormDetail.financialDamage != null) {
                     speechOutput = speechOutput + " It caused significant physical damage, totalling " + 
                         stormDetail.financialDamage + ".";
+                    cardOutput = cardOutput + "Financial Damage : " + stormDetail.financialDamage;
                 }
 
                 var repromptText = "Would you like to hear more about other storms?";
     
                 callback(sessionAttributes,
-                    buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
 
             }
         });
@@ -590,13 +605,13 @@ function getStormDetail(intent, session, callback) {
         var repromptText = "Would you like to hear more about other storms?";
     
         callback(sessionAttributes,
-             buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+             buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
     }
 }
 
 // --------------- Helpers that build all of the responses -----------------------
 
-function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
+function buildSpeechletResponse(title, output, cardInfo, repromptText, shouldEndSession) {
     return {
         outputSpeech: {
             type: "PlainText",
@@ -605,7 +620,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
         card: {
             type: "Simple",
             title: title,
-            content: output
+            content: cardInfo
         },
         reprompt: {
             outputSpeech: {
