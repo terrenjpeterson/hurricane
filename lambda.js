@@ -324,19 +324,22 @@ function getWhichYear(intent, session, callback) {
                     console.log('Error getting history data : ' + err)
                 else {
                     // data retrieval was successfull - now parse through it and provide back in the reponse.
-                    console.log('data retrieved: ' + data.Body);
+                    //console.log('data retrieved: ' + data.Body);
                     
                     var historyArray = eval('(' + data.Body + ')');
 
                     // parse through the history and find the data for the requested year
                     for (j = 0; j < historyArray.length; j++) {
-                        console.log('year: ' + historyArray[j].stormYear);
+                    //    console.log('year: ' + historyArray[j].stormYear);
                         if (historyArray[j].stormYear == requestYear)
                             var stormHistoryArray = historyArray[j];
                     }
                     
+                    console.log('using data' + JSON.stringify(stormHistoryArray));
+                    
                     // build the response back based on stringing together all information for the year
                     var stormReading = {};
+                    var moreStormData = [];
                     
                     stormReading = 'In the ' + ocean + ' ocean ' +
                         'there were ' + stormHistoryArray.storms.length + 
@@ -348,13 +351,27 @@ function getWhichYear(intent, session, callback) {
                     for (i = 0; i < stormHistoryArray.storms.length; i++) {
                         stormReading = stormReading + stormHistoryArray.storms[i].stormType + 
                             ' ' + stormHistoryArray.storms[i].stormName + ', ';
+                        if (stormHistoryArray.storms[i].scale != null) {
+                            console.log('more data available on ' + stormHistoryArray.storms[i].stormName);
+                            moreStormData.push(stormHistoryArray.storms[i]);
+                        }
                     }
 
                     stormReading = stormReading + '.';
 
                     speechOutput = stormReading;
                     
-                    repromptText = "Would you like to hear information about another year?";
+                    for (i = 0; i < moreStormData.length; i++) {
+                        console.log('storm data on : ' + JSON.stringify(moreStormData[i]))
+                    }
+                    
+                    if (moreStormData.length == 0)
+                        repromptText = "Would you like to hear information about another year?";
+                    else {
+                        repromptText = "I have more information on " + moreStormData[0].stormType + 
+                        " " + moreStormData[0].stormName + ". Would you like to hear it? If so, please say " +
+                        "tell me more about " + moreStormData[0].stormName;
+                    }
 
                     callback(sessionAttributes,
                         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
