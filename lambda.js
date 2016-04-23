@@ -345,31 +345,49 @@ function getWhichYear(intent, session, callback) {
                     var stormReading = {};
                     var moreStormData = [];
                     
-                    stormReading = 'In the ' + ocean + ' ocean ' +
+                    speechOutput = 'In the ' + ocean + ' ocean ' +
                         'there were ' + stormHistoryArray.storms.length + 
                         ' storms in ' + stormHistoryArray.stormYear + '. ';
 
-                    stormReading = stormReading + 'The storm names were ';
+                    //stormReading = stormReading + 'The storm names were ';
 
-                    // this is the array of storm names - unpack into sentance form.
+                    var hurricaneNames = [];
+                    var tropicalStormNames = [];
+
+                    // sort the storm names into separate arrays
                     for (i = 0; i < stormHistoryArray.storms.length; i++) {
-                        stormReading = stormReading + stormHistoryArray.storms[i].stormType + 
-                            ' ' + stormHistoryArray.storms[i].stormName + ', ';
-                        cardOutput = cardOutput + stormHistoryArray.storms[i].stormType +
-                            ' ' + stormHistoryArray.storms[i].stormName + '\n ';
+                        if (stormHistoryArray.storms[i].stormType == "Hurricane")
+                            hurricaneNames.push(stormHistoryArray.storms[i].stormName);
+                        else
+                            tropicalStormNames.push(stormHistoryArray.storms[i].stormName);
                         if (stormHistoryArray.storms[i].scale != null) {
                             console.log('more data available on ' + stormHistoryArray.storms[i].stormName);
                             moreStormData.push(stormHistoryArray.storms[i]);
                         }
                     }
 
-                    stormReading = stormReading + '.';
+                    console.log('process hurricane array' + JSON.stringify(hurricaneNames));
 
-                    speechOutput = stormReading;
-                    
+                    // now go through each array and create sentance structure
+                    speechOutput = speechOutput + "The hurricane names are ";
+                    cardOutput = cardOutput + "Hurricanes:\n";
+
+                    for (i = 0; i < hurricaneNames.length; i++) {
+                        speechOutput = speechOutput + hurricaneNames[i] + ", ";
+                        cardOutput = cardOutput + hurricaneNames[i] + "\n";
+                    }
+
+                    speechOutput = speechOutput + "The tropical storm names are ";
+                    cardOutput = cardOutput + "\nTropical Storms:\n";
+
+                    for (i = 0; i < tropicalStormNames.length; i++) {
+                        speechOutput = speechOutput + tropicalStormNames[i] + ", ";
+                        cardOutput = cardOutput + tropicalStormNames[i] + "\n";
+                    }
+
                     for (i = 0; i < moreStormData.length; i++) {
-                        cardOutput = cardOutput + 'More data available on ' + stormHistoryArray.storms[i].stormName + '\n';
-                        //console.log('storm data on : ' + JSON.stringify(moreStormData[i]))
+                        cardOutput = cardOutput + 'More data available on ' + stormHistoryArray.storms[i].stormName + "\n";
+                        console.log('storm data on : ' + JSON.stringify(moreStormData[i]))
                     }
                     
                     if (moreStormData.length == 0)
@@ -416,9 +434,8 @@ function getThisYearStorm(intent, session, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
+    var cardOutput = "";
     var cardTitle = "Storm Information for 2016";
-
-    console.log("session attributes: " + sessionAttributes);
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -434,6 +451,7 @@ function getThisYearStorm(intent, session, callback) {
     if (oceanPreference == null) {
         speechOutput = speechOutput + "If you would like to hear this years storm names " +
             "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
+        cardOutput = speechOutput;
         repromptText = "Please let me know which ocean you would like to hear storm data " +
             "for by saying Atlantic Ocean or Pacific Ocean";
     } else {
@@ -450,6 +468,13 @@ function getThisYearStorm(intent, session, callback) {
             currentYearStorms.stormNames[3] + ", and " +
             currentYearStorms.stormNames[4] + ". ";
 
+        cardOutput = oceanPreference + " Ocean\n" +
+            currentYearStorms.stormNames[0] + "\n" +
+            currentYearStorms.stormNames[1] + "\n" +
+            currentYearStorms.stormNames[2] + "\n" +
+            currentYearStorms.stormNames[3] + "\n" +
+            currentYearStorms.stormNames[4] + "\n";
+
         speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms";
 
         repromptText = "Would you like more information? If you would like a complete list of this years " +
@@ -458,7 +483,7 @@ function getThisYearStorm(intent, session, callback) {
     }
     
     callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+         buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
 }
 
 // this function prepares the response when the user requests a full list of storm names
@@ -575,10 +600,12 @@ function getStormDetail(intent, session, callback) {
                     
                 var cardOutput = "Became a Tropical Storm on " + stormDetail.tropStormStart + "\n" +
                     "Became a Hurricane on " + stormDetail.hurrStart + "\n" +
-                    "Top Wind Speed : " + stormDetail.peakWinds + "\n";
+                    "Top Wind Speed : " + stormDetail.peakWinds + " mph\n";
                     
-                if (stormDetail.landfall)
+                if (stormDetail.landfall) {
                     speechOutput = speechOutput + "It made initial landfall hitting " + stormDetail.initialLandfallLocation + ". ";
+                    cardOutput = cardOutput + "Initial Landfall Location: " + stormDetail.initialLandfallLocation + "\n";
+                }
                 else
                     speechOutput = speechOutput + "It did not make landfall. ";
                     
