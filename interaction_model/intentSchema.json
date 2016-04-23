@@ -28,6 +28,15 @@
       "intent": "CompleteListOfStorms"
     },
     {
+      "intent": "GetStormDetail",
+      "slots": [
+        {
+          "name": "Storm",
+          "type": "LIST_OF_STORMS"
+        }
+      ]
+    },
+    {
       "intent": "AMAZON.StartOverIntent"
     },
     {

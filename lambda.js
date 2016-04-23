@@ -1,4 +1,4 @@
-**
+/**
  * This sample demonstrates a simple skill built with the Amazon Alexa Skills Kit.
  * The Intent Schema, Custom Slots, and Sample Utterances for this skill, as well as
  * testing instructions are located at http://amzn.to/1LzFrj6
@@ -151,6 +151,8 @@ function onIntent(intentRequest, session, callback) {
         getThisYearStorm(intent, session, callback);
     } else if ("CompleteListOfStorms" === intentName) {
         getCompleteList(intent, session, callback);
+    } else if ("GetStormDetail" === intentName) {
+        getStormDetail(intent, session, callback);
     } else if ("AMAZON.StartOverIntent" === intentName) {
         getWelcomeResponse(callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
@@ -474,6 +476,7 @@ function getCompleteList(intent, session, callback) {
     if (oceanPreference == null) {
         speechOutput = "If you would like to hear this years storm names " +
             "please first let me know which set by saying Atlantic Ocean or Pacific Ocean";
+            
         repromptText = "Please let me know which storm I can provide information on by saying " +
             "Atlantic Ocean or Pacific Ocean.";
     } else {
@@ -492,6 +495,97 @@ function getCompleteList(intent, session, callback) {
     
     callback(sessionAttributes,
          buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+}
+
+// this function provides details about a particular storm
+function getStormDetail(intent, session, callback) {
+    var shouldEndSession = false;
+    var sessionAttributes = {};
+    var cardTitle = "Storm Details";
+
+    // this is used to process if the name passed in has available detail
+    var stormDetailAvail = ["Danny", "Katrina"];
+    var stormDetailExists = false;
+
+    var stormName = intent.slots.Storm.value;
+
+    //console.log("session attributes: " + sessionAttributes);
+
+    for (i = 0; i < stormDetailAvail.length ; i++) {
+        if (stormDetailAvail[i] == stormName)
+            stormDetailExists = true;
+    }
+
+    if (stormDetailExists) {
+        var speechOutput = "Getting detail on storm " + stormName;
+
+        var s3 = new aws.S3();
+    
+        var ocean = "Atlantic";
+    
+        var getParams = {Bucket : 'hurricane-data', 
+                         Key : 'stormHistoryAtlantic.json'}; 
+
+        console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+
+        s3.getObject(getParams, function(err, data) {
+            if(err)
+                console.log('Error getting history data : ' + err)
+            else {
+                // data retrieval was successfull - now parse through it and provide back in the reponse.
+                //console.log('data retrieved: ' + data.Body);
+                    
+                var historyArray = eval('(' + data.Body + ')');
+
+                // parse through the history and find the data for the requested year
+                for (j = 0; j < historyArray.length; j++) {
+                    //console.log('year: ' + historyArray[j].stormYear);
+                    for (k = 0; k <historyArray[j].storms.length; k++) {
+                        //console.log('detail: ' + JSON.stringify(historyArray[j].storms[k]));
+                        if (historyArray[j].storms[k].stormName == stormName && historyArray[j].storms[k].scale != null)
+                            stormDetail = historyArray[j].storms[k];
+                    }
+                }
+                
+                console.log('Storm Detail: ' + JSON.stringify(stormDetail));
+                
+                var speechOutput = stormDetail.stormType + " " + stormDetail.stormName +
+                    " was a " + stormDetail.scale + " hurricane with peak winds of " +
+                    stormDetail.peakWinds + " miles per hour. ";
+                    
+                var speechOutput = speechOutput + stormDetail.stormName + " formed in the Atlantic Ocean " +
+                    "as a Tropical Storm on " + stormDetail.tropStormStart + " and became a hurricane on " +
+                    stormDetail.hurrStart + ". ";
+                    
+                if (stormDetail.landfall)
+                    speechOutput = speechOutput + "It made initial landfall hitting " + stormDetail.initialLandfallLocation + ". ";
+                else
+                    speechOutput = speechOutput + "It did not make landfall. ";
+                    
+                speechOutput = speechOutput + "On " + stormDetail.hurrEnd + " the winds dropped below hurricane status.";
+
+                if (stormDetail.financialDamage != null) {
+                    speechOutput = speechOutput + " It caused significant physical damage, totalling " + 
+                        stormDetail.financialDamage + ".";
+                }
+
+                var repromptText = "Would you like to hear more about other storms?";
+    
+                callback(sessionAttributes,
+                    buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+
+            }
+        });
+    } else {
+    
+        // this will be processed in case there wasn't a matching storm name to provide details about
+        var speechOutput = "I'm sorry, I don't have any details about " + stormName;
+    
+        var repromptText = "Would you like to hear more about other storms?";
+    
+        callback(sessionAttributes,
+             buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+    }
 }
 
 // --------------- Helpers that build all of the responses -----------------------
