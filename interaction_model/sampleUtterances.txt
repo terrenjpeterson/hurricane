@@ -7,12 +7,19 @@ ListStormNames list storm names
 SetOceanPreference {Ocean} ocean
 
 StormsFromPriorYears storms from prior years
+StormsFromPriorYears storm history
+StormsFromPriorYears storm history of {Date}
+StormsFromPriorYears storm history for {Date}
 StormsFromPriorYears from prior years
+StormsFromPriorYears prior years storms
 StormsFromPriorYears storms from last year
 StormsFromPriorYears storms from {Date}
+StormsFromPriorYears {Date}
 
 ThisYearsStorms this years storms
+ThisYearsStorms list of this years storms
 ThisYearsStorms storms for this year
+ThisYearsStorms current year
 
 CompleteListOfStorms complete list of this years storms
 CompleteListOfStorms complete list
