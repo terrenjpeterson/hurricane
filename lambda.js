@@ -151,7 +151,11 @@ function onIntent(intentRequest, session, callback) {
         getThisYearStorm(intent, session, callback);
     } else if ("CompleteListOfStorms" === intentName) {
         getCompleteList(intent, session, callback);
-    } else if ("AMAZON.HelpIntent" === intentName || "AMAZON.StartOverIntent" === intentName) {
+    } else if ("AMAZON.StartOverIntent" === intentName) {
+        getWelcomeResponse(callback);
+    } else if ("AMAZON.HelpIntent" === intentName) {
+        getHelpResponse(callback);
+    } else if ("AMAZON.RepeatIntent" === intentName) {
         getWelcomeResponse(callback);
     } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName) {
         handleSessionEndRequest(callback);
@@ -170,8 +174,9 @@ function onSessionEnded(sessionEndedRequest, session) {
     // Add cleanup logic here
 }
 
-// --------------- Functions that control the skill's behavior -----------------------
+// --------------- Base Functions that are invoked based on standard utterances -----------------------
 
+// this is the function that gets called to format the response to the user when they first boot the app
 function getWelcomeResponse(callback) {
     // If we wanted to initialize the session to have some attributes we could add those here.
     var sessionAttributes = {};
@@ -182,16 +187,35 @@ function getWelcomeResponse(callback) {
     // If the user either does not reply to the welcome message or says something that is not
     // understood, they will be prompted again with this text.
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
-        "list storm names or hurricane records.";
+        "list storm names or storm history.";
     var shouldEndSession = false;
 
     callback(sessionAttributes,
         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
 }
 
+// this is the function that gets called to format the response to the user when they ask for help
+function getHelpResponse(callback) {
+    var sessionAttributes = {};
+    var cardTitle = "Help";
+    // this will be what the user hears after asking for help
+    var speechOutput = "The Hurricane Center provides information about tropical storms. " +
+        "If you would like to hear about storms from this year, say What are storms from this year. " +
+        "For information related to storms from prior years, please say What is the storm history " +
+        "for a specific year.";
+    // if the user still does not respond, they will be prompted with this additional information
+    var repromptText = "Please tell me how I can help you by saying phrases like, " +
+        "list storm names or storm history.";
+    var shouldEndSession = false;
+
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+}
+
+// this is the function that gets called to format the response when the user is done
 function handleSessionEndRequest(callback) {
-    var cardTitle = "Session Ended";
-    var speechOutput = "Thank you for trying the Alexa Skills Kit sample. Have a nice day!";
+    var cardTitle = "Thanks for using Hurricane Center";
+    var speechOutput = "Thank you for checking in with the Hurricane Center. Have a nice day!";
     // Setting this to true ends the session and exits the skill.
     var shouldEndSession = true;
 
@@ -252,6 +276,7 @@ function getStormNames(intent, session, callback) {
 
     if (oceanPreference) {
         speechOutput = "Your ocean preference is " + oceanPreference;
+        sessionAttributes = storeOceanAttributes(oceanPreference);
     } else {
         speechOutput = "Which ocean would you like details for, please say, Atlantic Ocean or Pacific Ocean";
     }
@@ -268,14 +293,21 @@ function getWhichYear(intent, session, callback) {
     var repromptText = "";
     var cardTitle = "Storm History";
 
+    if (session.attributes) {
+        oceanPreference = session.attributes.ocean;
+        sessionAttributes = storeOceanAttributes(oceanPreference);
+    }
+
     console.log("session attributes: " + JSON.stringify(session.attributes));
     console.log("intent attributes: " + JSON.stringify(intent.slots.Date));
 
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
-        if (requestYear > 2000 && requestYear < 2016) {
+        if (requestYear > 2004 && requestYear < 2016) {
             
             var s3 = new aws.S3();
+    
+            var ocean = "Atlantic";
     
             var getParams = {Bucket : 'hurricane-data', 
                              Key : 'stormHistoryAtlantic.json'}; 
@@ -286,15 +318,36 @@ function getWhichYear(intent, session, callback) {
                 if(err)
                     console.log('Error getting history data : ' + err)
                 else {
-                    console.log('Successfully retrieved history data : ');
-
                     // data retrieval was successfull - now parse through it and provide back in the reponse.
+                    console.log('data retrieved: ' + data.Body);
                     
-                    var stormHistoryArray = data.Body;
+                    var historyArray = eval('(' + data.Body + ')');
+
+                    // parse through the history and find the data for the requested year
+                    for (j = 0; j < historyArray.length; j++) {
+                        console.log('year: ' + historyArray[j].stormYear);
+                        if (historyArray[j].stormYear == requestYear)
+                            var stormHistoryArray = historyArray[j];
+                    }
                     
-                    console.log('data retrieved: ' + stormHistoryArray);
-            
-                    speechOutput = "Okay, I'm getting storm history for " + requestYear;
+                    // build the response back based on stringing together all information for the year
+                    var stormReading = {};
+                    
+                    stormReading = 'In the ' + ocean + ' ocean ' +
+                        'there were ' + stormHistoryArray.storms.length + 
+                        ' storms in ' + stormHistoryArray.stormYear + '. ';
+
+                    stormReading = stormReading + 'The storm names were ';
+
+                    // this is the array of storm names - unpack into sentance form.
+                    for (i = 0; i < stormHistoryArray.storms.length; i++) {
+                        stormReading = stormReading + stormHistoryArray.storms[i].stormType + 
+                            ' ' + stormHistoryArray.storms[i].stormName + ', ';
+                    }
+
+                    stormReading = stormReading + '.';
+
+                    speechOutput = stormReading;
 
                     callback(sessionAttributes,
                         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
@@ -306,7 +359,7 @@ function getWhichYear(intent, session, callback) {
 
             speechOutput = "Sorry, I don't have information for " + requestYear;
 
-            repromptText = "Please state a year between 1995 and 2016. " +
+            repromptText = "Please state a year between 2005 and 2016. " +
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
@@ -337,6 +390,7 @@ function getThisYearStorm(intent, session, callback) {
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
+        sessionAttributes = storeOceanAttributes(oceanPreference);
     }
 
     // first check if there are any active storms, and if so provide current details
@@ -381,12 +435,13 @@ function getCompleteList(intent, session, callback) {
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
+        sessionAttributes = storeOceanAttributes(oceanPreference);
     }
     
     // first check to make sure an ocean has been selected, and if so list all of the storm names for it
 
     if (oceanPreference == null)
-        speechOutput = "If you would like to hear this years storm names" +
+        speechOutput = "If you would like to hear this years storm names " +
             "please first let me know which set by saying Atlantic Ocean or Pacific Ocean";
     else {
         speechOutput = speechOutput + "The 2016 storm names for the " + oceanPreference + " Ocean will be ";
