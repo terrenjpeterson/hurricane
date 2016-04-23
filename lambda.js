@@ -448,11 +448,7 @@ function getCompleteList(intent, session, callback) {
     
     // first check to make sure an ocean has been selected, and if so list all of the storm names for it
 
-<<<<<<< HEAD
     if (oceanPreference == null) {
-=======
-    if (oceanPreference == null)
->>>>>>> c63beee72eee36a571c49f3dabd446f0e971d566
         speechOutput = "If you would like to hear this years storm names " +
             "please first let me know which set by saying Atlantic Ocean or Pacific Ocean";
         repromptText = "Please let me know which storm I can provide information on by saying " +
