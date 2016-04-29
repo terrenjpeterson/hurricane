@@ -243,7 +243,8 @@ function setOceanInSession(intent, session, callback) {
             "Would you like to hear about this years storms, or storms from prior years?";
         repromptText = "Here is the storm information for the " + ocean + " ocean.";
     } else {
-        speechOutput = "I'm not sure which ocean you are looking for. Please try again";
+        speechOutput = "I'm not sure which ocean you are looking for. Please try again by " +
+            "saying Atlantic or Pacific.";
         repromptText = "I'm not sure which ocean you want information on. " +
             "Please say either Atlantic or Pacific.";
     }
@@ -276,9 +277,12 @@ function getStormNames(intent, session, callback) {
     }
 
     if (oceanPreference) {
-        speechOutput = "Your ocean preference is " + oceanPreference;
+        speechOutput = "Your ocean preference is " + oceanPreference + ". " +
+            "Please let me know what information I can provide, for example say " +
+            "List storm names.";
         sessionAttributes = storeOceanAttributes(oceanPreference);
-        repromptText = "What would you like to do next";
+        repromptText = "What would you like me to read you this years storms? If so, " +
+            "please say List storm names.";
     } else {
         speechOutput = "Which ocean would you like details for, please say, Atlantic Ocean or Pacific Ocean";
         repromptText = "Please let me know which ocean you would like details " +
@@ -387,15 +391,19 @@ function getWhichYear(intent, session, callback) {
 
                     for (i = 0; i < moreStormData.length; i++) {
                         cardOutput = cardOutput + 'More data available on ' + stormHistoryArray.storms[i].stormName + "\n";
-                        console.log('storm data on : ' + JSON.stringify(moreStormData[i]))
+                        console.log('storm data on : ' + JSON.stringify(moreStormData[i]));
                     }
                     
-                    if (moreStormData.length == 0)
-                        repromptText = "Would you like to hear information about another year?";
-                    else {
-                        repromptText = "I have more information on " + moreStormData[0].stormType + 
+                    if (moreStormData.length == 0) {
+                        speechOutput = speechOutput + " Would you like to hear information about another year?";
+                        repromptText = "Would you like to hear information about another year? If so, please say " +
+                            "something like tell me about storms from 2007.";
+                    } else {
+                        speechOutput = speechOutput + " I have more information on " + moreStormData[0].stormType + 
                         " " + moreStormData[0].stormName + ". Would you like to hear it? If so, please say " +
-                        "tell me more about " + moreStormData[0].stormName;
+                        "tell me more about " + moreStormData[0].stormName + ".";
+                        repromptText = "Would you like to hear information about another year? If so, please say " +
+                            "something like tell me about storms from 2007.";
                     }
 
                     callback(sessionAttributes,
@@ -406,7 +414,9 @@ function getWhichYear(intent, session, callback) {
         } else {
             console.log('Year selected for storm history outside of available data');
 
-            speechOutput = "Sorry, I don't have information for " + requestYear;
+            speechOutput = "Sorry, I don't have information for " + requestYear + ". " +
+                "I do have information on storms between 2005 and 2016.  Please let me " +
+                "know which year I can provide within that range.";
 
             repromptText = "Please state a year between 2005 and 2016. " +
                 "For example, say Storms for 2012.";
@@ -428,9 +438,10 @@ function getWhichYear(intent, session, callback) {
     }
 }
 
+// this function gets information about this years storms
 function getThisYearStorm(intent, session, callback) {
     var oceanPreference;
-    var repromptText = null;
+    var repromptText = "";
     var shouldEndSession = false;
     var sessionAttributes = {};
     var speechOutput = "";
@@ -475,11 +486,11 @@ function getThisYearStorm(intent, session, callback) {
             currentYearStorms.stormNames[3] + "\n" +
             currentYearStorms.stormNames[4] + "\n";
 
-        speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms";
+        speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms.";
 
         repromptText = "Would you like more information? If you would like a complete list of this years " +
             "storms, say Complete list of this years storms. If you would like storm history from prior years " +
-            "please say Storm History."
+            "please say Storm History.";
     }
     
     callback(sessionAttributes,
@@ -506,7 +517,7 @@ function getCompleteList(intent, session, callback) {
 
     if (oceanPreference == null) {
         speechOutput = "If you would like to hear this years storm names " +
-            "please first let me know which set by saying Atlantic Ocean or Pacific Ocean";
+            "please first let me know which set by saying Atlantic Ocean or Pacific Ocean.";
             
         repromptText = "Please let me know which storm I can provide information on by saying " +
             "Atlantic Ocean or Pacific Ocean.";
@@ -520,6 +531,8 @@ function getCompleteList(intent, session, callback) {
         for (i = 0; i < currentYearStorms.stormNames.length; i++) { 
             speechOutput = speechOutput + currentYearStorms.stormNames[i] + ", ";
         }
+        speechOutput = speechOutput + ". Would you like to hear information about a prior year? " +
+            "If so, please say something like storms from 2011.";
         repromptText = "Would you like to hear storm information about prior years storms? If so " +
             "please say Storm History.";
     }
@@ -534,6 +547,7 @@ function getStormDetail(intent, session, callback) {
     var sessionAttributes = {};
     var cardTitle = "Storm Details";
     var cardOutput = "";
+    var repromptText = "";
 
     // this is used to process if the name passed in has available detail
     var stormDetailAvail = ["Danny", "Katrina", "Sandy", "Irene", "Ike"];
@@ -546,8 +560,9 @@ function getStormDetail(intent, session, callback) {
     //console.log("session attributes: " + sessionAttributes);
 
     for (i = 0; i < stormDetailAvail.length ; i++) {
-        if (stormDetailAvail[i].toLowerCase() == stormName.toLowerCase())
-            stormDetailExists = true;
+        if (stormName != null)
+            if (stormDetailAvail[i].toLowerCase() == stormName.toLowerCase())
+                stormDetailExists = true;
     }
 
     if (stormDetailExists) {
@@ -613,11 +628,15 @@ function getStormDetail(intent, session, callback) {
 
                 if (stormDetail.financialDamage != null) {
                     speechOutput = speechOutput + " It caused significant physical damage, totalling " + 
-                        stormDetail.financialDamage + ".";
+                        stormDetail.financialDamage + ". ";
                     cardOutput = cardOutput + "Financial Damage : " + stormDetail.financialDamage;
                 }
 
-                var repromptText = "Would you like to hear more about other storms?";
+                speechOutput = speechOutput + "If you would like to hear information about another storm, " +
+                    "please prompt me with another name.";
+                    
+                repromptText = "Would you like to hear more about other storms?  If so, please " +
+                    "let me know by saying something like Tell me about Hurricane Katrina.";
     
                 callback(sessionAttributes,
                     buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
@@ -627,7 +646,14 @@ function getStormDetail(intent, session, callback) {
     } else {
     
         // this will be processed in case there wasn't a matching storm name to provide details about
-        var speechOutput = "I'm sorry, I don't have any details about " + stormName;
+        if (stormName == null)
+            var speechOutput = "Please provide a storm name to hear details.";
+        else
+            var speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
+                "Please provide a different storm name that you would like information on. For example, " +
+                "say Tell me about Hurricane Katrina.";
+    
+        cardOutput = speechOutput;
     
         var repromptText = "Would you like to hear more about other storms?";
     
