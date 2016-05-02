@@ -550,7 +550,7 @@ function getStormDetail(intent, session, callback) {
     var repromptText = "";
 
     // this is used to process if the name passed in has available detail
-    var stormDetailAvail = ["Danny", "Katrina", "Sandy", "Irene", "Ike"];
+    var stormDetailAvail = ["Danny", "Katrina", "Sandy", "Irene", "Ike","Gonzalo","Isaac","Alex","Karl","Dean","Ernesto","Rita","Wilma"];
     var stormDetailExists = false;
 
     var stormName = intent.slots.Storm.value;
