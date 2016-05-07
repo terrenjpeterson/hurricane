@@ -1,8 +1,5 @@
 /**
- * This sample demonstrates a simple skill built with the Amazon Alexa Skills Kit.
- * The Intent Schema, Custom Slots, and Sample Utterances for this skill, as well as
- * testing instructions are located at http://amzn.to/1LzFrj6
- *
+ * This skill provides details about hurricanes, both prior years as well as current
  */
 
 var aws = require('aws-sdk');
@@ -69,6 +66,29 @@ var pacificStorms = [
         ]
     }
 ];
+
+// storm names that historical information is available for in the datasets
+
+var stormDetailAvail = [
+            {"stormName":"Danny", "ocean":"Atlantic"}, 
+            {"stormName":"Katrina", "ocean":"Atlantic"}, 
+            {"stormName":"Sandy", "ocean":"Atlantic"}, 
+            {"stormName":"Irene", "ocean":"Atlantic"}, 
+            {"stormName":"Ike", "ocean":"Atlantic"},
+            {"stormName":"Gonzalo", "ocean":"Atlantic"},
+            {"stormName":"Isaac", "ocean":"Atlantic"},
+            {"stormName":"Alex", "ocean":"Atlantic"},
+            {"stormName":"Karl", "ocean":"Atlantic"},
+            {"stormName":"Dean", "ocean":"Atlantic"},
+            {"stormName":"Ernesto", "ocean":"Atlantic"},
+            {"stormName":"Rita", "ocean":"Atlantic"},
+            {"stormName":"Wilma", "ocean":"Atlantic"},
+            {"stormName":"Patricia", "ocean":"Pacific"},
+            {"stormName":"Odile", "ocean":"Pacific"},
+];
+
+// location of the storm dataset
+var stormDataBucket = 'hurricane-data';
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
@@ -237,7 +257,8 @@ function setOceanInSession(intent, session, callback) {
     console.log("preferred ocean : " + preferredOcean);
 
     if ("Atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
-        var ocean = preferredOcean.value;
+        var ocean = preferredOcean.value.charAt(0).toUpperCase() + preferredOcean.value.slice(1);
+
         sessionAttributes = storeOceanAttributes(ocean);
         speechOutput = "Okay. My understanding is that you want information on the " + ocean + " ocean. " +
             "Would you like to hear about this years storms, or storms from prior years?";
@@ -305,8 +326,12 @@ function getWhichYear(intent, session, callback) {
     var repromptText = "";
     var cardTitle = "Storm History";
 
+    // get what ocean has been requested
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
+        sessionAttributes = storeOceanAttributes(oceanPreference);
+    } else {
+        oceanPreference = "Atlantic";
         sessionAttributes = storeOceanAttributes(oceanPreference);
     }
 
@@ -320,10 +345,10 @@ function getWhichYear(intent, session, callback) {
             
             var s3 = new aws.S3();
     
-            var ocean = "Atlantic";
+            var oceanObject = 'stormHistory' + oceanPreference + '.json';
     
-            var getParams = {Bucket : 'hurricane-data', 
-                             Key : 'stormHistoryAtlantic.json'}; 
+            var getParams = {Bucket : stormDataBucket, 
+                             Key : oceanObject }; 
 
             console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
@@ -349,7 +374,7 @@ function getWhichYear(intent, session, callback) {
                     var stormReading = {};
                     var moreStormData = [];
                     
-                    speechOutput = 'In the ' + ocean + ' ocean ' +
+                    speechOutput = 'In the ' + oceanPreference + ' ocean ' +
                         'there were ' + stormHistoryArray.storms.length + 
                         ' storms in ' + stormHistoryArray.stormYear + '. ';
 
@@ -370,7 +395,7 @@ function getWhichYear(intent, session, callback) {
                         }
                     }
 
-                    console.log('process hurricane array' + JSON.stringify(hurricaneNames));
+                    //console.log('process hurricane array' + JSON.stringify(hurricaneNames));
 
                     // now go through each array and create sentance structure
                     speechOutput = speechOutput + "The hurricane names are ";
@@ -549,8 +574,6 @@ function getStormDetail(intent, session, callback) {
     var cardOutput = "";
     var repromptText = "";
 
-    // this is used to process if the name passed in has available detail
-    var stormDetailAvail = ["Danny", "Katrina", "Sandy", "Irene", "Ike","Gonzalo","Isaac","Alex","Karl","Dean","Ernesto","Rita","Wilma"];
     var stormDetailExists = false;
 
     var stormName = intent.slots.Storm.value;
@@ -561,8 +584,10 @@ function getStormDetail(intent, session, callback) {
 
     for (i = 0; i < stormDetailAvail.length ; i++) {
         if (stormName != null)
-            if (stormDetailAvail[i].toLowerCase() == stormName.toLowerCase())
+            if (stormDetailAvail[i].stormName.toLowerCase() == stormName.toLowerCase()) {
                 stormDetailExists = true;
+                var ocean = stormDetailAvail[i].ocean;
+            }
     }
 
     if (stormDetailExists) {
@@ -570,12 +595,13 @@ function getStormDetail(intent, session, callback) {
 
         var s3 = new aws.S3();
     
-        var ocean = "Atlantic";
+        //var ocean = "Atlantic";
+        var stormHistoryObject = 'stormHistory' + ocean + '.json';
     
-        var getParams = {Bucket : 'hurricane-data', 
-                         Key : 'stormHistoryAtlantic.json'}; 
+        var getParams = {Bucket : stormDataBucket, 
+                         Key : stormHistoryObject}; 
 
-        console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+        //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
         s3.getObject(getParams, function(err, data) {
             if(err)
@@ -607,7 +633,7 @@ function getStormDetail(intent, session, callback) {
                     " was a " + stormDetail.scale + " hurricane with peak winds of " +
                     stormDetail.peakWinds + " miles per hour. ";
                     
-                var speechOutput = speechOutput + stormDetail.stormName + " formed in the Atlantic Ocean " +
+                var speechOutput = speechOutput + stormDetail.stormName + " formed in the " + ocean + " Ocean " +
                     "as a Tropical Storm on " + stormDetail.tropStormStart + " and became a hurricane on " +
                     stormDetail.hurrStart + ". ";
 
