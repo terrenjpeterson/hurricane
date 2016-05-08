@@ -70,21 +70,25 @@ var pacificStorms = [
 // storm names that historical information is available for in the datasets
 
 var stormDetailAvail = [
-            {"stormName":"Danny", "ocean":"Atlantic"}, 
-            {"stormName":"Katrina", "ocean":"Atlantic"}, 
-            {"stormName":"Sandy", "ocean":"Atlantic"}, 
-            {"stormName":"Irene", "ocean":"Atlantic"}, 
-            {"stormName":"Ike", "ocean":"Atlantic"},
-            {"stormName":"Gonzalo", "ocean":"Atlantic"},
-            {"stormName":"Isaac", "ocean":"Atlantic"},
-            {"stormName":"Alex", "ocean":"Atlantic"},
-            {"stormName":"Karl", "ocean":"Atlantic"},
-            {"stormName":"Dean", "ocean":"Atlantic"},
-            {"stormName":"Ernesto", "ocean":"Atlantic"},
-            {"stormName":"Rita", "ocean":"Atlantic"},
-            {"stormName":"Wilma", "ocean":"Atlantic"},
-            {"stormName":"Patricia", "ocean":"Pacific"},
-            {"stormName":"Odile", "ocean":"Pacific"},
+            {"stormName":"Danny", "ocean":"Atlantic", "stormYear":2015}, 
+            {"stormName":"Katrina", "ocean":"Atlantic", "stormYear":2005}, 
+            {"stormName":"Sandy", "ocean":"Atlantic", "stormYear":2012}, 
+            {"stormName":"Irene", "ocean":"Atlantic", "stormYear":2011}, 
+            {"stormName":"Ike", "ocean":"Atlantic", "stormYear":2008},
+            {"stormName":"Gonzalo", "ocean":"Atlantic", "stormYear":2014},
+            {"stormName":"Isaac", "ocean":"Atlantic", "stormYear":2012},
+            {"stormName":"Alex", "ocean":"Atlantic", "stormYear":2010},
+            {"stormName":"Karl", "ocean":"Atlantic", "stormYear":2010},
+            {"stormName":"Dean", "ocean":"Atlantic", "stormYear":2007},
+            {"stormName":"Ernesto", "ocean":"Atlantic", "stormYear":2006},
+            {"stormName":"Rita", "ocean":"Atlantic", "stormYear":2005},
+            {"stormName":"Wilma", "ocean":"Atlantic", "stormYear":2005},
+            {"stormName":"Linda", "ocean":"Pacific", "stormYear":2015},
+            {"stormName":"Patricia", "ocean":"Pacific", "stormYear":2015},
+            {"stormName":"Odile", "ocean":"Pacific", "stormYear":2014},
+            {"stormName":"Manuel", "ocean":"Pacific", "stormYear":2013},
+            {"stormName":"Paul", "ocean":"Pacific", "stormYear":2012},
+            {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011}
 ];
 
 // location of the storm dataset
@@ -363,12 +367,12 @@ function getWhichYear(intent, session, callback) {
 
                     // parse through the history and find the data for the requested year
                     for (j = 0; j < historyArray.length; j++) {
-                    //    console.log('year: ' + historyArray[j].stormYear);
+                        console.log('year: ' + historyArray[j].stormYear);
                         if (historyArray[j].stormYear == requestYear)
                             var stormHistoryArray = historyArray[j];
                     }
                     
-                    console.log('using data' + JSON.stringify(stormHistoryArray));
+                    //console.log('using data' + JSON.stringify(stormHistoryArray));
                     
                     // build the response back based on stringing together all information for the year
                     var stormReading = {};
@@ -595,13 +599,12 @@ function getStormDetail(intent, session, callback) {
 
         var s3 = new aws.S3();
     
-        //var ocean = "Atlantic";
         var stormHistoryObject = 'stormHistory' + ocean + '.json';
     
         var getParams = {Bucket : stormDataBucket, 
                          Key : stormHistoryObject}; 
 
-        //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+        console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
         s3.getObject(getParams, function(err, data) {
             if(err)
@@ -611,6 +614,8 @@ function getStormDetail(intent, session, callback) {
                 //console.log('data retrieved: ' + data.Body);
                     
                 var historyArray = eval('(' + data.Body + ')');
+
+                console.log('do i get here');
 
                 // parse through the history and find the data for the requested storm
                 for (j = 0; j < historyArray.length; j++) {
