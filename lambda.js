@@ -203,21 +203,64 @@ function onSessionEnded(sessionEndedRequest, session) {
 
 // this is the function that gets called to format the response to the user when they first boot the app
 function getWelcomeResponse(callback) {
-    // If we wanted to initialize the session to have some attributes we could add those here.
     var sessionAttributes = {};
-    var cardTitle = "Welcome";
+    var shouldEndSession = false;
+    var cardTitle = "Welcome to Hurricane Center";
+
     var speechOutput = "Welcome to the Hurricane Center, the best source for information " +
         "related to tropical storms, past or present. Please begin by asking me " +
         "about current storms for 2016 or storms for prior years.";
-        
-    // If the user either does not reply to the welcome message or says something that is not
-    // understood, they will be prompted again with this text.
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
         "list storm names or storm history for 2012.";
-    var shouldEndSession = false;
+    var activeStorms = false;
 
-    callback(sessionAttributes,
-        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    // check current data to see if there are active storms and if so change the welcome message
+    var s3 = new aws.S3();
+
+    var getParams = {Bucket : stormDataBucket,
+                    Key : 'currStorms.json'};
+
+    console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+
+    s3.getObject(getParams, function(err, data) {
+        if(err)
+            console.log('Error getting history data : ' + err);
+        else {
+            var returnData = eval('(' + data.Body + ')');
+            //console.log('Successfully retrieved history data : ' + data.Body);
+            //
+            if (returnData[0].activeStorms === false) {
+                console.log('no active storms');
+            } else {
+                console.log('there is an active storm');
+                // parse through the array and build an appropriate welcome message
+                speechOutput = "Welcome to the Hurricane Center. ";
+                var storms = returnData[0].storms;
+                var activeStormAtlantic = false;
+                var activeStormPacific = false;
+                // rotate through the array of current storm data
+                for (i = 0; i < storms.length; i++) {
+                    if (storms[i].formed) {
+                        if (storms[i].ocean == "Atlantic")
+                            activeStormAtlantic = true;
+                        else
+                            activeStormPacific = true;
+                    }
+                }
+                // build a different message depending on where the oceans are at
+                if (activeStormAtlantic === true & activeStormPacific === false)
+                    speechOutput = speechOutput + "There is currently an active storm in the Atlantic Ocean. ";
+                else if (activeStormAtlantic === false & activeStormPacific === true) 
+                    speechOutput = speechOutput + "There is currently an active storm in the Pacific Ocean. ";
+                else if (activeStormAtlantic === true && activeStormPacific === true)
+                    speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
+                speechOutput = speechOutput + "To hear more about the storm activity, say current storm detail.";
+            }
+        }
+        console.log('speech output : ' + speechOutput);
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    });
 }
 
 // this is the function that gets called to format the response to the user when they ask for help
