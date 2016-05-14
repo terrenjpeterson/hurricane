@@ -208,8 +208,8 @@ function getWelcomeResponse(callback) {
     var cardTitle = "Welcome to Hurricane Center";
 
     var speechOutput = "Welcome to the Hurricane Center, the best source for information " +
-        "related to tropical storms, past or present. Please begin by asking me " +
-        "about current storms for 2016 or storms for prior years.";
+        "related to tropical storms, past or present. Please begin by saying something like " +
+        "Current Storms or Storms for Prior Years.";
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
         "list storm names or storm history for 2012.";
     var activeStorms = false;
