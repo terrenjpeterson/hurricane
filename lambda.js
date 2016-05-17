@@ -526,47 +526,97 @@ function getThisYearStorm(intent, session, callback) {
     }
 
     // first check if there are any active storms, and if so provide current details
-    // NOTE: this will be completed at a later time
+    var s3 = new aws.S3();
+
+    var getParams = {Bucket : stormDataBucket,
+                    Key : 'currStorms.json'};
+
+    console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+
+    s3.getObject(getParams, function(err, data) {
+        if(err)
+            console.log('Error getting history data : ' + err);
+        else {
+            var returnData = eval('(' + data.Body + ')');
+            //console.log('Successfully retrieved history data : ' + data.Body);
+            //
+            if (returnData[0].activeStorms === false) {
+                // if there are no active storms, provide what the names will be
+                speechOutput = "There aren't any active storms yet for this year. ";
     
-    // if there are no active storms, provide what the names will be
-    speechOutput = "There aren't any active storms yet for this year. ";
-    
-    if (oceanPreference == null) {
-        speechOutput = speechOutput + "If you would like to hear this years storm names " +
-            "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
-        cardOutput = speechOutput;
-        repromptText = "Please let me know which ocean you would like to hear storm data " +
-            "for by saying Atlantic Ocean or Pacific Ocean";
-    } else {
-        speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";
-        if (oceanPreference == "Atlantic") 
-            currentYearStorms = atlanticStorms[0];
-        else
-            currentYearStorms = pacificStorms[0];
+                if (oceanPreference == null) {
+                    // this logic is processed in case that there is no ocean preference set
+                    speechOutput = speechOutput + "If you would like to hear this years storm names " +
+                        "please let me know which set by saying Atlantic Ocean or Pacific Ocean";
+
+                    cardOutput = speechOutput;
+
+                    repromptText = "Please let me know which ocean you would like to hear storm data " +
+                        "for by saying Atlantic Ocean or Pacific Ocean";
+                } else {
+                    // no current storms, but ocean preference is set - so share what the first five storm names are
+                    //
+                    speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";
+                    if (oceanPreference == "Atlantic") 
+                        currentYearStorms = atlanticStorms[0];
+                    else
+                        currentYearStorms = pacificStorms[0];
             
-        speechOutput = speechOutput + 
-            currentYearStorms.stormNames[0] + ", " +
-            currentYearStorms.stormNames[1] + ", " +
-            currentYearStorms.stormNames[2] + ", " +
-            currentYearStorms.stormNames[3] + ", and " +
-            currentYearStorms.stormNames[4] + ". ";
+                    speechOutput = speechOutput + 
+                        currentYearStorms.stormNames[0] + ", " +
+                        currentYearStorms.stormNames[1] + ", " +
+                        currentYearStorms.stormNames[2] + ", " +
+                        currentYearStorms.stormNames[3] + ", and " +
+                        currentYearStorms.stormNames[4] + ". ";
 
-        cardOutput = oceanPreference + " Ocean\n" +
-            currentYearStorms.stormNames[0] + "\n" +
-            currentYearStorms.stormNames[1] + "\n" +
-            currentYearStorms.stormNames[2] + "\n" +
-            currentYearStorms.stormNames[3] + "\n" +
-            currentYearStorms.stormNames[4] + "\n";
+                    cardOutput = oceanPreference + " Ocean\n" +
+                        currentYearStorms.stormNames[0] + "\n" +
+                        currentYearStorms.stormNames[1] + "\n" +
+                        currentYearStorms.stormNames[2] + "\n" +
+                        currentYearStorms.stormNames[3] + "\n" +
+                        currentYearStorms.stormNames[4] + "\n";
 
-        speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms.";
+                    speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms.";
 
-        repromptText = "Would you like more information? If you would like a complete list of this years " +
-            "storms, say Complete list of this years storms. If you would like storm history from prior years " +
-            "please say Storm History.";
-    }
+                    repromptText = "Would you like more information? If you would like a complete list of this years " +
+                        "storms, say Complete list of this years storms. If you would like storm history from prior years " +
+                        "please say Storm History.";
+                }
     
-    callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                callback(sessionAttributes,
+                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));                
+                
+            } else {
+                console.log('there is an active storm');
+                // parse through the array and build an appropriate welcome message
+                speechOutput = "There are currently active storms. ";
+                var storms = returnData[0].storms;
+
+                // go through the returned array and build language and cards depicting the storm data.
+                for (i = 0; i < storms.length; i++) {
+                    if (storms[i].formed) {
+                        speechOutput = speechOutput + "As of " + returnData[0].latestUpdate +
+                            ", in the " + storms[i].ocean + " Ocean, " +
+                            storms[i].stormType + " " + storms[i].stormName + " is currently " +
+                            "producing winds of " + storms[i].peakWinds + " miles per hour. ";
+                        speechOutput = speechOutput + storms[i].stormName + " is moving " +
+                            storms[i].movementDirection + " at " + storms[i].movementSpeed +
+                            " miles per hour. " + "The storm is currently " + storms[i].forecastPower +
+                            " and is " + storms[i].forecastPath + ". ";
+                    }
+                }
+
+                speechOutput = speechOutput + " Please check back later as we track this potentially dangerous event.";
+                
+                var shouldEndSession = true;
+
+                cardOutput = speechOutput;
+                
+                callback(sessionAttributes,
+                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+            }
+        }
+    });
 }
 
 // this function prepares the response when the user requests a full list of storm names
