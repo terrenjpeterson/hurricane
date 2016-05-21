@@ -608,7 +608,7 @@ function getThisYearStorm(intent, session, callback) {
 
                 speechOutput = speechOutput + " Please check back later as we track this potentially dangerous event.";
                 
-                var shouldEndSession = true;
+                shouldEndSession = true;
 
                 cardOutput = speechOutput;
                 
