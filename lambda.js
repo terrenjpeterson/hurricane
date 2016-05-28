@@ -388,7 +388,7 @@ function getWhichYear(intent, session, callback) {
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
         cardTitle = "Storm History for " + requestYear;
-        if (requestYear > 2004 && requestYear < 2016) {
+        if (requestYear > 1999 && requestYear < 2016) {
             
             var s3 = new aws.S3();
     
@@ -538,7 +538,7 @@ function getThisYearStorm(intent, session, callback) {
             console.log('Error getting history data : ' + err);
         else {
             var returnData = eval('(' + data.Body + ')');
-            //console.log('Successfully retrieved history data : ' + data.Body);
+            console.log('Successfully retrieved history data : ' + data.Body);
             //
             if (returnData[0].activeStorms === false) {
                 // if there are no active storms, provide what the names will be
@@ -599,10 +599,15 @@ function getThisYearStorm(intent, session, callback) {
                             ", in the " + storms[i].ocean + " Ocean, " +
                             storms[i].stormType + " " + storms[i].stormName + " is currently " +
                             "producing winds of " + storms[i].peakWinds + " miles per hour. ";
-                        speechOutput = speechOutput + storms[i].stormName + " is moving " +
-                            storms[i].movementDirection + " at " + storms[i].movementSpeed +
-                            " miles per hour. " + "The storm is currently " + storms[i].forecastPower +
-                            " and is " + storms[i].forecastPath + ". ";
+
+                        if (storms[i].movementDirection != null)                            
+                            speechOutput = speechOutput + storms[i].stormName + " is moving " +
+                                storms[i].movementDirection + " at " + storms[i].movementSpeed +
+                                " miles per hour. " + "The storm is currently " + storms[i].forecastPower +
+                                " and is " + storms[i].forecastPath + ". ";
+                                
+                        if (storms[i].generalForecast != null)
+                            speechOutput = speechOutput + storms[i].generalForecast;
                     }
                 }
 
