@@ -595,27 +595,68 @@ function getThisYearStorm(intent, session, callback) {
                 // go through the returned array and build language and cards depicting the storm data.
                 for (i = 0; i < storms.length; i++) {
                     if (storms[i].formed) {
+                        
+                        // this is the introduction message with the high level information on the storm
+                        
                         speechOutput = speechOutput + "As of " + returnData[0].latestUpdate +
                             ", in the " + storms[i].ocean + " Ocean, " +
                             storms[i].stormType + " " + storms[i].stormName + " is currently " +
-                            "producing winds of " + storms[i].peakWinds + " miles per hour. ";
+                            "producing winds of " + storms[i].peakWinds + " miles per hour. " +
+                            "The storm center has a low pressure of " + storms[i].pressure + " millibars. ";
 
-                        if (storms[i].movementDirection != null)                            
-                            speechOutput = speechOutput + storms[i].stormName + " is moving " +
-                                storms[i].movementDirection + " at " + storms[i].movementSpeed +
-                                " miles per hour. " + "The storm is currently " + storms[i].forecastPower +
-                                " and is " + storms[i].forecastPath + ". ";
+                        // this will only be processed if there is a tropical storm warning
+                        
+                        if (storms[i].tropStormWarning === true)
+                            speechOutput = speechOutput + "From the National Hurricane Center in Miami, Florida. " +
+                                "A Tropical Storm Warning has been issued for " + storms[i].tropStormLocation + ". " +
+                                "A Tropical Storm Warning means that tropical storm conditions are expected somewhere " +
+                                "within the warning area within the next 36 hours. ";
+
+                        // this will build around the location then movement and is always expected to be present
                                 
-                        if (storms[i].generalForecast != null)
-                            speechOutput = speechOutput + storms[i].generalForecast;
+                        speechOutput = speechOutput + "The storm center is currently located near " +
+                            storms[i].location.lat + " and " + storms[i].location.long + " and approximately " +
+                            storms[i].location.proximity + ". ";
+                            
+                        speechOutput = speechOutput + "Present movement is toward the " + storms[i].movement.direction +
+                            " at " + storms[i].movement.speed + " miles per hour, and this general motion is expected to " +
+                            storms[i].movement.forecast + ". ";
+
+                        // this builds the forecast
+                        
+                        speechOutput = speechOutput + "Looking ahead, tropical storm conditions are expected to first reach " +
+                            storms[i].landfallPredict + ". The storm is expected to produce a total of " +
+                            storms[i].hazards.rainfall + ". Storm surge inundation of " + storms[i].hazards.stormSurge +
+                            " is expected within the tropical storm warning area. This system is expected to produce " +
+                            storms[i].hazards.surf + ". ";
+
+                        // this closes the dialog highlighting when the next update will be provided
+                        
+                        speechOutput = speechOutput + "The next complete advisory will be at " + returnData[0].nextUpdate + ". ";
+
+                        // format card data
+                        
+                        cardOutput = "Data from the NWS National Hurricane Center\n" +
+                            "Update on : " + storms[i].stormType + " " + storms[i].stormName + "\n" +
+                            "Data as of : " + returnData[0].latestUpdate + "\n" +
+                            "Current Location : " + storms[i].location.lat + " and " + storms[i].location.long + "\n" +
+                            "Movement : " + storms[i].movement.direction + " at " + storms[i].movement.speed + "mph\n" +
+                            "Peak Winds : " + storms[i].peakWinds + " mph\n" +
+                            "Core Pressure : " + storms[i].pressure + " mb\n" +
+                            "Forecast :\r" +
+                            "Rainfall : " + storms[i].hazards.rainfall + "\n" +
+                            "Storm Surge : " + storms[i].hazards.stormSurge + "\n" +
+                            "Surf : " + storms[i].hazards.surf + "\n" +
+                            "\nNext Update : " + returnData[0].nextUpdate + "\n";
                     }
                 }
 
-                speechOutput = speechOutput + " Please check back later as we track this potentially dangerous event.";
+                speechOutput = speechOutput + " Please check back later as we track this potentially dangerous event. " +
+                    "If you would like to hear storm information from prior years, say something like Storm History for 2011.";
                 
-                shouldEndSession = true;
+                shouldEndSession = false;
 
-                cardOutput = speechOutput;
+                //cardOutput = speechOutput;
                 
                 callback(sessionAttributes,
                     buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
