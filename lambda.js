@@ -542,7 +542,7 @@ function getThisYearStorm(intent, session, callback) {
             //
             if (returnData[0].activeStorms === false) {
                 // if there are no active storms, provide what the names will be
-                speechOutput = "There aren't any active storms yet for this year. ";
+                speechOutput = "There aren't any active tropical storms in either ocean right now. ";
     
                 if (oceanPreference == null) {
                     // this logic is processed in case that there is no ocean preference set
@@ -623,12 +623,18 @@ function getThisYearStorm(intent, session, callback) {
                             storms[i].movement.forecast + ". ";
 
                         // this builds the forecast
+
+                        if (storms[i].landfall === true && storms[i].tropStormWarning === true)    
+                            speechOutput = speechOutput + "Looking ahead, tropical storm conditions are expected to first reach " +
+                                storms[i].landfallPredict + ". ";
                         
-                        speechOutput = speechOutput + "Looking ahead, tropical storm conditions are expected to first reach " +
-                            storms[i].landfallPredict + ". The storm is expected to produce a total of " +
-                            storms[i].hazards.rainfall + ". Storm surge inundation of " + storms[i].hazards.stormSurge +
-                            " is expected within the tropical storm warning area. This system is expected to produce " +
-                            storms[i].hazards.surf + ". ";
+                        speechOutput = speechOutput + storms[i].hazards.rainfall + ". " + storms[i].hazards.stormSurge;
+
+                        if (storms[i].hazards.surf != null)
+                            speechOutput = speechOutput + "This system is expected to produce " + storms[i].hazards.surf + ". ";
+
+                        if (storms[i].hazards.wind != null)
+                            speechOutput = speechOutput + " " + storms[i].hazards.wind + ". ";
 
                         // this closes the dialog highlighting when the next update will be provided
                         
@@ -643,11 +649,18 @@ function getThisYearStorm(intent, session, callback) {
                             "Movement : " + storms[i].movement.direction + " at " + storms[i].movement.speed + "mph\n" +
                             "Peak Winds : " + storms[i].peakWinds + " mph\n" +
                             "Core Pressure : " + storms[i].pressure + " mb\n" +
-                            "Forecast :\r" +
-                            "Rainfall : " + storms[i].hazards.rainfall + "\n" +
-                            "Storm Surge : " + storms[i].hazards.stormSurge + "\n" +
-                            "Surf : " + storms[i].hazards.surf + "\n" +
-                            "\nNext Update : " + returnData[0].nextUpdate + "\n";
+                            "Forecast :\n";
+                            
+                        if (storms[i].hazards.rainfall != null)
+                            cardOutput = cardOutput + "Rainfall : " + storms[i].hazards.rainfall + "\n";
+                            
+                        if (storms[i].hazards.stormSurge != null)
+                            cardOutput = cardOutput + "Storm Surge : " + storms[i].hazards.stormSurge + "\n";
+                            
+                        if (storms[i].hazards.surf != null)
+                            cardOutput = cardOutput + "Surf : " + storms[i].hazards.surf + "\n";
+                            
+                        cardOutput = cardOutput + "Next Update : " + returnData[0].nextUpdate;
                     }
                 }
 
