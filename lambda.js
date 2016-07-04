@@ -88,7 +88,8 @@ var stormDetailAvail = [
             {"stormName":"Odile", "ocean":"Pacific", "stormYear":2014},
             {"stormName":"Manuel", "ocean":"Pacific", "stormYear":2013},
             {"stormName":"Paul", "ocean":"Pacific", "stormYear":2012},
-            {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011}
+            {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011},
+            {"stormName":"Andrew", "ocean":"Atlantic", "stormYear":1992}
 ];
 
 // location of the storm dataset
@@ -214,13 +215,15 @@ function getWelcomeResponse(callback) {
         "list storm names or storm history for 2012.";
     var activeStorms = false;
 
+    console.log("Get Welcome Message");
+
     // check current data to see if there are active storms and if so change the welcome message
     var s3 = new aws.S3();
 
     var getParams = {Bucket : stormDataBucket,
                     Key : 'currStorms.json'};
 
-    console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+    //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
     s3.getObject(getParams, function(err, data) {
         if(err)
@@ -257,7 +260,7 @@ function getWelcomeResponse(callback) {
                 speechOutput = speechOutput + "To hear more about the storm activity, say current storm detail.";
             }
         }
-        console.log('speech output : ' + speechOutput);
+        //console.log('speech output : ' + speechOutput);
         callback(sessionAttributes,
             buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
     });
@@ -272,6 +275,8 @@ function getHelpResponse(callback) {
         "If you would like to hear about storms from this year, say What are storms from this year. " +
         "For information related to storms from prior years, please say What is the storm history " +
         "for a specific year.";
+
+    console.log("Get Help Response");
         
     // if the user still does not respond, they will be prompted with this additional information
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
@@ -301,6 +306,7 @@ function setOceanInSession(intent, session, callback) {
     var shouldEndSession = false;
     var speechOutput = "";
 
+    console.log("Setting ocean preference");
     console.log("preferred ocean : " + preferredOcean);
 
     if ("Atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
@@ -338,7 +344,7 @@ function getStormNames(intent, session, callback) {
     var speechOutput = "";
     var cardTitle = "Hurricane Center";
 
-    console.log("session attributes: " + sessionAttributes);
+    console.log("Get Storm Names");
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -373,6 +379,8 @@ function getWhichYear(intent, session, callback) {
     var repromptText = "";
     var cardTitle = "Storm History";
 
+    console.log("Retrieve Storm History");
+
     // get what ocean has been requested
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -388,16 +396,17 @@ function getWhichYear(intent, session, callback) {
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
         cardTitle = "Storm History for " + requestYear;
-        if (requestYear > 1999 && requestYear < 2016) {
+        if (requestYear > 1990 && requestYear < 2016) {
             
             var s3 = new aws.S3();
     
             var oceanObject = 'stormHistory' + oceanPreference + '.json';
+            //var oceanObject = 'stormHistoryAtlTest.json';
     
             var getParams = {Bucket : stormDataBucket, 
                              Key : oceanObject }; 
 
-            console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+            //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
             s3.getObject(getParams, function(err, data) {
                 if(err)
@@ -498,7 +507,7 @@ function getWhichYear(intent, session, callback) {
             };
         }
     else {
-        console.log('No year provided for storm history');
+        console.log("Reprompt user to select a year for storm history");
         
         speechOutput = "Which year would you like storm history for?";
 
@@ -525,20 +534,22 @@ function getThisYearStorm(intent, session, callback) {
         sessionAttributes = storeOceanAttributes(oceanPreference);
     }
 
+    console.log("get information about this years storms");
+
     // first check if there are any active storms, and if so provide current details
     var s3 = new aws.S3();
 
     var getParams = {Bucket : stormDataBucket,
                     Key : 'currStorms.json'};
 
-    console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+    //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
     s3.getObject(getParams, function(err, data) {
         if(err)
             console.log('Error getting history data : ' + err);
         else {
             var returnData = eval('(' + data.Body + ')');
-            console.log('Successfully retrieved history data : ' + data.Body);
+            //console.log('Successfully retrieved history data : ' + data.Body);
             //
             if (returnData[0].activeStorms === false) {
                 // if there are no active storms, provide what the names will be
@@ -642,7 +653,7 @@ function getThisYearStorm(intent, session, callback) {
 
                         // format card data
                         
-                        cardOutput = "Data from the NWS National Hurricane Center\n" +
+                        cardOutput = cardOutput + "Data from the NWS National Hurricane Center\n" +
                             "Update on : " + storms[i].stormType + " " + storms[i].stormName + "\n" +
                             "Data as of : " + returnData[0].latestUpdate + "\n" +
                             "Current Location : " + storms[i].location.lat + " and " + storms[i].location.long + "\n" +
@@ -687,7 +698,7 @@ function getCompleteList(intent, session, callback) {
     var speechOutput = "";
     var cardTitle = "Storm Inventory";
 
-    console.log("session attributes: " + sessionAttributes);
+    console.log("Get complete list of this years storms");
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -697,6 +708,7 @@ function getCompleteList(intent, session, callback) {
     // first check to make sure an ocean has been selected, and if so list all of the storm names for it
 
     if (oceanPreference == null) {
+        console.log("Did not provide storm names as no ocean was set");
         speechOutput = "If you would like to hear this years storm names " +
             "please first let me know which set by saying Atlantic Ocean or Pacific Ocean.";
             
@@ -734,7 +746,7 @@ function getStormDetail(intent, session, callback) {
 
     var stormName = intent.slots.Storm.value;
 
-    console.log("storm name: " + stormName);
+    console.log("Providing detail on storm name: " + stormName);
     
     //console.log("session attributes: " + sessionAttributes);
 
@@ -752,11 +764,12 @@ function getStormDetail(intent, session, callback) {
         var s3 = new aws.S3();
     
         var stormHistoryObject = 'stormHistory' + ocean + '.json';
+        //var stormHistoryObject = 'stormHistoryAtlTest.json';
     
         var getParams = {Bucket : stormDataBucket, 
                          Key : stormHistoryObject}; 
 
-        console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+        //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
         s3.getObject(getParams, function(err, data) {
             if(err)
@@ -767,15 +780,13 @@ function getStormDetail(intent, session, callback) {
                     
                 var historyArray = eval('(' + data.Body + ')');
 
-                console.log('do i get here');
-
                 // parse through the history and find the data for the requested storm
                 for (j = 0; j < historyArray.length; j++) {
-                    console.log('year: ' + historyArray[j].stormYear);
+                    //console.log('year: ' + historyArray[j].stormYear);
                     for (k = 0; k <historyArray[j].storms.length; k++) {
                         //console.log('detail: ' + JSON.stringify(historyArray[j].storms[k]));
                         if (historyArray[j].storms[k].stormName.toLowerCase() == stormName.toLowerCase() && historyArray[j].storms[k].scale != null) {
-                            console.log('found match');
+                            console.log('found match for ' + stormName);
                             stormDetail = historyArray[j].storms[k];
                             stormDetail.year = historyArray[j].stormYear;
                         }
