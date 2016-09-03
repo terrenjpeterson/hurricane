@@ -170,10 +170,14 @@ function onIntent(intentRequest, session, callback) {
         getStormNames(intent, session, callback);
     } else if ("SetOceanPreference" === intentName) {
         setOceanInSession(intent, session, callback);
-    } else if ("StormsFromPriorYears" == intentName) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2016) {
+        getCurrentYearHistory(intent, session, callback);
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2016) {
         getWhichYear(intent, session, callback);
     } else if ("ThisYearsStorms" === intentName) {
         getThisYearStorm(intent, session, callback);
+    } else if ("CurrentYearHistory" === intentName) {
+        getCurrentYearHistory(intent, session, callback);
     } else if ("CompleteListOfStorms" === intentName) {
         getCompleteList(intent, session, callback);
     } else if ("GetStormDetail" === intentName) {
@@ -367,6 +371,82 @@ function getStormNames(intent, session, callback) {
          buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
 }
 
+// Sets the ocean name in case it has not done so already
+function getCurrentYearHistory(intent, session, callback) {
+    var oceanPreference;
+    var sessionAttributes = {};
+    var shouldEndSession = false;
+    var cardTitle = "Storm History for 2016";
+
+    console.log("Get Current Year History");
+
+    var currYearStormArray = [
+            {"stormName":"Alex", "ocean":"Atlantic", "level":"Hurricane"}, 
+            {"stormName":"Bonnie", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Colin", "ocean":"Atlantic", "level":"Tropical Storm"},
+            {"stormName":"Danielle", "ocean":"Atlantic", "level":"Hurricane"},
+            {"stormName":"Earl", "ocean":"Atlantic", "level":"Tropical Storm"},             
+            {"stormName":"Fionna", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Pali", "ocean":"Pacific", "level":"Hurricane"}, 
+            {"stormName":"Agatha", "ocean":"Pacific", "level":"Tropical Storm"}, 
+            {"stormName":"Blas", "ocean":"Pacific", "level":"Hurricane"}, 
+            {"stormName":"Celia", "ocean":"Pacific", "level":"Hurricane"}, 
+            {"stormName":"Darby", "ocean":"Pacific", "level":"Hurricane"}, 
+            {"stormName":"Estelle", "ocean":"Pacific", "level":"Tropical Storm"}, 
+            {"stormName":"Frank", "ocean":"Pacific", "level":"Hurricane"}, 
+            {"stormName":"Georgette", "ocean":"Pacific", "level":"Hurricane"}, 
+            {"stormName":"Howard", "ocean":"Pacific", "level":"Tropical Storm"}, 
+            {"stormName":"Ivette", "ocean":"Pacific", "level":"Tropical Storm"}, 
+            {"stormName":"Javier", "ocean":"Pacific", "level":"Tropical Storm"}, 
+            {"stormName":"Kay", "ocean":"Pacific", "level":"Tropical Storm"}
+        ];
+
+    var atlanticTropStorms = 0;
+    var atlanticHurricanes = 0;
+    var pacificTropStorms = 0;
+    var pacificHurricanes = 0;
+
+    // rotate through all of the current storms and count categories
+
+    for (i = 0; i < currYearStormArray.length; i++) {
+        if(currYearStormArray[i].ocean == "Atlantic") {
+            if(currYearStormArray[i].level == "Hurricane") {
+                atlanticHurricanes += 1;
+            } else {
+                atlanticTropStorms += 1;
+            }
+        } else {
+            if(currYearStormArray[i].level == "Hurricane") {
+                pacificHurricanes += 1;
+            } else {
+                pacificTropStorms += 1;
+            }
+        }
+    }
+
+    // format response by merging the summary from the array with natural language
+
+    var speechOutput = "So far this year there have been " + atlanticHurricanes +
+        " hurricanes in the Atlantic and " + pacificHurricanes +
+        " in the Pacific. There have been " + atlanticTropStorms +
+        " Tropical Storms in the Atlantic and " + pacificTropStorms +
+        " in the Pacific. " +
+        " If you would like to hear about current active storms please say" +
+        " Current Storms and I will give a detailed overview of what is currently active.";
+        
+    var cardOutput = "Atlantic Ocean\n" + atlanticHurricanes +
+        " Hurricanes\n" + atlanticTropStorms +
+        " Tropical Storms\n" + "Pacific Ocean\n" + pacificHurricanes +
+        " Hurricanes\n" + pacificTropStorms +
+        " Tropical Storms\n";
+
+    var repromptText = "If you would like information about current storms, please " +
+        "say List Current Storms.";
+
+    callback(sessionAttributes,
+         buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+}
+
 // This function returns storm history. It checks to make sure that the year one where data
 // can be provided back, and if so pulls it from an S3 bucket. The data is parsed and a response
 // is formatted
@@ -499,7 +579,7 @@ function getWhichYear(intent, session, callback) {
                 "I do have information on storms between 2005 and 2016.  Please let me " +
                 "know which year I can provide within that range.";
 
-            repromptText = "Please state a year between 2005 and 2016. " +
+            repromptText = "Please state a year between 1991 and 2016. " +
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
@@ -622,6 +702,21 @@ function getThisYearStorm(intent, session, callback) {
                                 "A Tropical Storm Warning has been issued for " + storms[i].tropStormLocation + ". " +
                                 "A Tropical Storm Warning means that tropical storm conditions are expected somewhere " +
                                 "within the warning area within the next 36 hours. ";
+
+                        if (storms[i].hurricaneWarning === true)
+                            speechOutput = speechOutput + "From the National Hurricane Center in Miami, Florida. " +
+                                "A Hurricane Warning has been issued for " + storms[i].tropStormLocation + ". " +
+                                "A Hurricane Warning means that hurricane conditions are expected somewhere " +
+                                "within the warning area within the next 36 hours. ";
+
+                        if (storms[i].hurricaneWatch === true)
+                            speechOutput = speechOutput + "From the National Hurricane Center in Miami, Florida. " +
+                                "A Hurricane Watch has been issued for " + storms[i].tropStormLocation + ". " +
+                                "A Hurricane Watch means that hurricane conditions are possible " +
+                                "within the watch area. A Hurricane Watch is typically issued 48 " +
+                                "hours before the anticipated first occurrence of tropical storm " +
+                                "force winds, conditions that make outside preparations difficult " +
+                                "or dangerous. "
 
                         // this will build around the location then movement and is always expected to be present
                                 
