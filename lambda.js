@@ -1,68 +1,124 @@
 /**
- * This skill provides details about hurricanes, both prior years as well as current
+ * This skill provides details about hurricanes through 2016, both prior years as well as current
  */
 
 var aws = require('aws-sdk');
+
+// this is used by the VoiceLabs analytics
+var APP_ID = 'amzn1.echo-sdk-ams.app.709af9ef-d5eb-48dd-a90a-0dc48dc822d6';
+var VoiceInsights =require('voice-insights-sdk'),
+  VI_APP_TOKEN = '17373460-06c4-11a7-2596-0eb19d13e26e';
 
 // Get this years storm names
 
 var atlanticStorms = [
     {
-        "stormYear": 2016,
+        "stormYear": 2017,
         "stormNames": [
-            "Alex", 
-            "Bonnie", 
-            "Colin",
-            "Danielle",
-            "Earl",
-            "Fiona",
-            "Gaston",
-            "Hermine",
-            "Ian",
-            "Julia",
-            "Karl",
-            "Lisa",
-            "Matthew",
-            "Nicole",
-            "Otto",
-            "Paula",
-            "Richard",
-            "Shary",
-            "Tobias",
-            "Virginie",
-            "Walter"
+            "Arlene", 
+            "Bret", 
+            "Cindy",
+            "Don",
+            "Emily",
+            "Franklin",
+            "Gert",
+            "Harvey",
+            "Irma",
+            "Jose",
+            "Katia",
+            "Lee",
+            "Maria",
+            "Nate",
+            "Ophelia",
+            "Philippe",
+            "Rina",
+            "Sean",
+            "Tammy",
+            "Vince",
+            "Whitney"
+    //    ],
+    //    "stormYear": 2016,
+    //    "stormNames": [
+    //        "Alex", 
+    //        "Bonnie", 
+    //        "Colin",
+    //        "Danielle",
+    //        "Earl",
+    //        "Fiona",
+    //        "Gaston",
+    //        "Hermine",
+    //        "Ian",
+    //        "Julia",
+    //        "Karl",
+    //        "Lisa",
+    //        "Matthew",
+    //        "Nicole",
+    //        "Otto",
+    //        "Paula",
+    //        "Richard",
+    //        "Shary",
+    //        "Tobias",
+    //        "Virginie",
+    //        "Walter"
         ]
     }
 ];
 
 var pacificStorms = [
     {
-        "stormYear": 2016,
+        "stormYear": 2017,
         "stormNames": [
-            "Agatha", 
-            "Blas", 
-            "Celia",
-            "Darby",
-            "Estelle",
-            "Frank",
-            "Georgette",
-            "Howard",
-            "Ivette",
-            "Javier",
-            "Kay",
-            "Lester",
-            "Madeline",
-            "Newton",
-            "Orlene",
-            "Paine",
-            "Roslyn",
-            "Seymour",
-            "Tina",
-            "Virgil",
-            "Winifred",
-            "Xavier",
-            "Yolanda",
-            "Zeke"
+            "Adrian", 
+            "Beatriz", 
+            "Calvin",
+            "Dora",
+            "Eugene",
+            "Fernanda",
+            "Greg",
+            "Hilary",
+            "Irwin",
+            "Jova",
+            "Kenneth",
+            "Lidia",
+            "Max",
+            "Norma",
+            "Otis",
+            "Pilar",
+            "Ramon",
+            "Selma",
+            "Todd",
+            "Veronica",
+            "Wiley",
+            "Xina",
+            "York",
+            "Zelda"
+    //    ],
+    //    "stormYear": 2016,
+    //    "stormNames": [
+    //        "Agatha", 
+    //        "Blas", 
+    //        "Celia",
+    //        "Darby",
+    //        "Estelle",
+    //        "Frank",
+    //        "Georgette",
+    //        "Howard",
+    //        "Ivette",
+    //        "Javier",
+    //        "Kay",
+    //        "Lester",
+    //        "Madeline",
+    //        "Newton",
+    //        "Orlene",
+    //        "Paine",
+    //        "Roslyn",
+    //        "Seymour",
+    //        "Tina",
+    //        "Virgil",
+    //        "Winifred",
+    //        "Xavier",
+    //        "Yolanda",
+    //        "Zeke"
         ]
     }
 ];
@@ -89,7 +145,8 @@ var stormDetailAvail = [
             {"stormName":"Manuel", "ocean":"Pacific", "stormYear":2013},
             {"stormName":"Paul", "ocean":"Pacific", "stormYear":2012},
             {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011},
-            {"stormName":"Andrew", "ocean":"Atlantic", "stormYear":1992}
+            {"stormName":"Andrew", "ocean":"Atlantic", "stormYear":1992},
+            {"stormName":"Matthew", "ocean":"Atlantic", "stormYear":2016}, 
 ];
 
 // location of the storm dataset
@@ -151,7 +208,7 @@ function onLaunch(launchRequest, session, callback) {
         ", sessionId=" + session.sessionId);
 
     // Dispatch to your skill's launch.
-    getWelcomeResponse(callback);
+    getWelcomeResponse(session, callback);
 }
 
 /**
@@ -170,9 +227,9 @@ function onIntent(intentRequest, session, callback) {
         getStormNames(intent, session, callback);
     } else if ("SetOceanPreference" === intentName) {
         setOceanInSession(intent, session, callback);
-    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2016) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2017) {
         getCurrentYearHistory(intent, session, callback);
-    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2016) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2017) {
         getWhichYear(intent, session, callback);
     } else if ("ThisYearsStorms" === intentName) {
         getThisYearStorm(intent, session, callback);
@@ -183,11 +240,11 @@ function onIntent(intentRequest, session, callback) {
     } else if ("GetStormDetail" === intentName) {
         getStormDetail(intent, session, callback);
     } else if ("AMAZON.StartOverIntent" === intentName) {
-        getWelcomeResponse(callback);
+        getWelcomeResponse(session, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
         getHelpResponse(callback);
     } else if ("AMAZON.RepeatIntent" === intentName) {
-        getWelcomeResponse(callback);
+        getWelcomeResponse(session, callback);
     } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName) {
         handleSessionEndRequest(callback);
     } else {
@@ -207,7 +264,7 @@ function onSessionEnded(sessionEndedRequest, session) {
 // --------------- Base Functions that are invoked based on standard utterances -----------------------
 
 // this is the function that gets called to format the response to the user when they first boot the app
-function getWelcomeResponse(callback) {
+function getWelcomeResponse(session, callback) {
     var sessionAttributes = {};
     var shouldEndSession = false;
     var cardTitle = "Welcome to Hurricane Center";
@@ -220,6 +277,10 @@ function getWelcomeResponse(callback) {
     var activeStorms = false;
 
     console.log("Get Welcome Message");
+    
+    // initialize voice analytics 
+    console.log("initialize session");
+    VoiceInsights.initialize(session, VI_APP_TOKEN);
 
     // check current data to see if there are active storms and if so change the welcome message
     var s3 = new aws.S3();
@@ -265,8 +326,13 @@ function getWelcomeResponse(callback) {
             }
         }
         //console.log('speech output : ' + speechOutput);
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+
+        VoiceInsights.track('WelcomeMessage', null, speechOutput, (err, res) => {
+	        console.log('voice insights logged' + JSON.stringify(res));
+	        
+	        callback(sessionAttributes,
+                buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+        });
     });
 }
 
@@ -287,8 +353,12 @@ function getHelpResponse(callback) {
         "list storm names or storm history.";
     var shouldEndSession = false;
 
-    callback(sessionAttributes,
-        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    VoiceInsights.track('HelpMessage', null, speechOutput, (err, res) => {
+	    console.log('voice insights logged' + JSON.stringify(res));
+
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    });
 }
 
 // this is the function that gets called to format the response when the user is done
@@ -298,7 +368,11 @@ function handleSessionEndRequest(callback) {
     // Setting this to true ends the session and exits the skill.
     var shouldEndSession = true;
 
-    callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, shouldEndSession));
+    VoiceInsights.track('EndMessage', null, speechOutput, (err, res) => {
+	    console.log('voice insights logged' + JSON.stringify(res));
+
+        callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, shouldEndSession));
+    });
 }
 
 // Sets the ocean in the session and prepares the speech to reply to the user.
@@ -367,8 +441,12 @@ function getStormNames(intent, session, callback) {
             "by saying Atlantic Ocean or Pacific Ocean";
     }
 
-    callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    VoiceInsights.track('GetStormNames', null, speechOutput, (err, res) => {
+        console.log('voice insights logged' + JSON.stringify(res));
+
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    });
 }
 
 // Sets the ocean name in case it has not done so already
@@ -376,29 +454,41 @@ function getCurrentYearHistory(intent, session, callback) {
     var oceanPreference;
     var sessionAttributes = {};
     var shouldEndSession = false;
-    var cardTitle = "Storm History for 2016";
+    var cardTitle = "Storm History for 2017";
 
     console.log("Get Current Year History");
 
     var currYearStormArray = [
-            {"stormName":"Alex", "ocean":"Atlantic", "level":"Hurricane"}, 
-            {"stormName":"Bonnie", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Colin", "ocean":"Atlantic", "level":"Tropical Storm"},
-            {"stormName":"Danielle", "ocean":"Atlantic", "level":"Hurricane"},
-            {"stormName":"Earl", "ocean":"Atlantic", "level":"Tropical Storm"},             
-            {"stormName":"Fionna", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Pali", "ocean":"Pacific", "level":"Hurricane"}, 
-            {"stormName":"Agatha", "ocean":"Pacific", "level":"Tropical Storm"}, 
-            {"stormName":"Blas", "ocean":"Pacific", "level":"Hurricane"}, 
-            {"stormName":"Celia", "ocean":"Pacific", "level":"Hurricane"}, 
-            {"stormName":"Darby", "ocean":"Pacific", "level":"Hurricane"}, 
-            {"stormName":"Estelle", "ocean":"Pacific", "level":"Tropical Storm"}, 
-            {"stormName":"Frank", "ocean":"Pacific", "level":"Hurricane"}, 
-            {"stormName":"Georgette", "ocean":"Pacific", "level":"Hurricane"}, 
-            {"stormName":"Howard", "ocean":"Pacific", "level":"Tropical Storm"}, 
-            {"stormName":"Ivette", "ocean":"Pacific", "level":"Tropical Storm"}, 
-            {"stormName":"Javier", "ocean":"Pacific", "level":"Tropical Storm"}, 
-            {"stormName":"Kay", "ocean":"Pacific", "level":"Tropical Storm"}
+    //        {"stormName":"Alex", "ocean":"Atlantic", "level":"Hurricane"}, 
+    //        {"stormName":"Bonnie", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+    //        {"stormName":"Colin", "ocean":"Atlantic", "level":"Tropical Storm"},
+    //        {"stormName":"Danielle", "ocean":"Atlantic", "level":"Hurricane"},
+    //        {"stormName":"Earl", "ocean":"Atlantic", "level":"Tropical Storm"},             
+    //        {"stormName":"Fionna", "ocean":"Atlantic", "level":"Tropical Storm"},
+    //        {"stormName":"Gaston", "ocean":"Atlantic", "level":"Hurricane"},
+    //        {"stormName":"Hermine", "ocean":"Atlantic", "level":"Hurricane"},
+    //        {"stormName":"Ian", "ocean":"Atlantic", "level":"Tropical Storm"},
+    //        {"stormName":"Julia", "ocean":"Atlantic", "level":"Tropical Storm"},
+    //        {"stormName":"Karl", "ocean":"Atlantic", "level":"Tropical Storm"},
+    //        {"stormName":"Lisa", "ocean":"Atlantic", "level":"Tropical Storm"},
+    //        {"stormName":"Matthew", "ocean":"Atlantic", "level":"Hurricane"},
+    //        {"stormName":"Pali", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Agatha", "ocean":"Pacific", "level":"Tropical Storm"}, 
+    //        {"stormName":"Blas", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Celia", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Darby", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Estelle", "ocean":"Pacific", "level":"Tropical Storm"}, 
+    //        {"stormName":"Frank", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Georgette", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Howard", "ocean":"Pacific", "level":"Tropical Storm"}, 
+    //        {"stormName":"Ivette", "ocean":"Pacific", "level":"Tropical Storm"}, 
+    //        {"stormName":"Javier", "ocean":"Pacific", "level":"Tropical Storm"}, 
+    //        {"stormName":"Kay", "ocean":"Pacific", "level":"Tropical Storm"},
+    //        {"stormName":"Lester", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Madeline", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Newton", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Orlene", "ocean":"Pacific", "level":"Hurricane"}, 
+    //        {"stormName":"Paine", "ocean":"Pacific", "level":"Hurricane"}
         ];
 
     var atlanticTropStorms = 0;
@@ -430,21 +520,30 @@ function getCurrentYearHistory(intent, session, callback) {
         " hurricanes in the Atlantic and " + pacificHurricanes +
         " in the Pacific. There have been " + atlanticTropStorms +
         " Tropical Storms in the Atlantic and " + pacificTropStorms +
-        " in the Pacific. " +
-        " If you would like to hear about current active storms please say" +
-        " Current Storms and I will give a detailed overview of what is currently active.";
+        " in the Pacific. ";
+//        " I have detailed information about Hurricane Matthew. If you would like details " +
+//        " please say, Details on Hurricane Matthew. " +
+//        " If you would like to hear about current active storms please say" +
+//        " Current Storms and I will give a detailed overview of what is currently active.";
         
     var cardOutput = "Atlantic Ocean\n" + atlanticHurricanes +
         " Hurricanes\n" + atlanticTropStorms +
         " Tropical Storms\n" + "Pacific Ocean\n" + pacificHurricanes +
         " Hurricanes\n" + pacificTropStorms +
-        " Tropical Storms\n";
+        " Tropical Storms\n" +
+        " Major Storms\n" +
+ //       " Hurricane Matthew - caused $5 Billion in damage in Haiti and Southeastern " +
+        "United States.";
 
     var repromptText = "If you would like information about current storms, please " +
         "say List Current Storms.";
 
-    callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+    VoiceInsights.track('GetCurrentYearHistory', null, speechOutput, (err, res) => {
+        console.log('voice insights logged' + JSON.stringify(res));
+
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+    });
 }
 
 // This function returns storm history. It checks to make sure that the year one where data
@@ -465,6 +564,7 @@ function getWhichYear(intent, session, callback) {
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
         sessionAttributes = storeOceanAttributes(oceanPreference);
+        //console.log('set default');
     } else {
         oceanPreference = "Atlantic";
         sessionAttributes = storeOceanAttributes(oceanPreference);
@@ -476,9 +576,13 @@ function getWhichYear(intent, session, callback) {
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
         cardTitle = "Storm History for " + requestYear;
-        if (requestYear > 1990 && requestYear < 2016) {
+        if (requestYear > 1990 && requestYear < 2017) {
             
             var s3 = new aws.S3();
+            
+            if (oceanPreference == null) {
+                oceanPreference = "Atlantic";
+            }
     
             var oceanObject = 'stormHistory' + oceanPreference + '.json';
             //var oceanObject = 'stormHistoryAtlTest.json';
@@ -486,7 +590,7 @@ function getWhichYear(intent, session, callback) {
             var getParams = {Bucket : stormDataBucket, 
                              Key : oceanObject }; 
 
-            //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
+            console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
 
             s3.getObject(getParams, function(err, data) {
                 if(err)
@@ -567,8 +671,12 @@ function getWhichYear(intent, session, callback) {
                             "something like tell me about storms from 2007.";
                     }
 
-                    callback(sessionAttributes,
-                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                    VoiceInsights.track('StormHistory', stormHistoryArray.stormYear, speechOutput, (err, res) => {
+                        console.log('voice insights logged' + JSON.stringify(res));
+
+                        callback(sessionAttributes,
+                            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                    });
                 };
             });
             
@@ -576,10 +684,10 @@ function getWhichYear(intent, session, callback) {
             console.log('Year selected for storm history outside of available data');
 
             speechOutput = "Sorry, I don't have information for " + requestYear + ". " +
-                "I do have information on storms between 2005 and 2016.  Please let me " +
+                "I do have information on storms between 2005 and 2017.  Please let me " +
                 "know which year I can provide within that range.";
 
-            repromptText = "Please state a year between 1991 and 2016. " +
+            repromptText = "Please state a year between 1991 and 2017. " +
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
@@ -607,7 +715,7 @@ function getThisYearStorm(intent, session, callback) {
     var sessionAttributes = {};
     var speechOutput = "";
     var cardOutput = "";
-    var cardTitle = "Storm Information for 2016";
+    var cardTitle = "Storm Information for 2017";
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -652,6 +760,8 @@ function getThisYearStorm(intent, session, callback) {
                         currentYearStorms = atlanticStorms[0];
                     else
                         currentYearStorms = pacificStorms[0];
+
+                    console.log("current year storms: " + JSON.stringify(currentYearStorms));
             
                     speechOutput = speechOutput + 
                         currentYearStorms.stormNames[0] + ", " +
@@ -810,11 +920,13 @@ function getCompleteList(intent, session, callback) {
         repromptText = "Please let me know which storm I can provide information on by saying " +
             "Atlantic Ocean or Pacific Ocean.";
     } else {
-        speechOutput = speechOutput + "The 2016 storm names for the " + oceanPreference + " Ocean will be ";
+        speechOutput = speechOutput + "The 2017 storm names for the " + oceanPreference + " Ocean will be ";
         if (oceanPreference == "Atlantic") 
             currentYearStorms = atlanticStorms[0];
         else
             currentYearStorms = pacificStorms[0];
+        
+        console.log('current year storms: ' + JSON.stringify(currentYearStorms));
         
         for (i = 0; i < currentYearStorms.stormNames.length; i++) { 
             speechOutput = speechOutput + currentYearStorms.stormNames[i] + ", ";
@@ -824,9 +936,13 @@ function getCompleteList(intent, session, callback) {
         repromptText = "Would you like to hear storm information about prior years storms? If so " +
             "please say Storm History.";
     }
-    
-    callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+
+    VoiceInsights.track('GetCompleteList', null, speechOutput, (err, res) => {
+        console.log('voice insights logged' + JSON.stringify(res));
+
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    });
 }
 
 // this function provides details about a particular storm
@@ -926,10 +1042,13 @@ function getStormDetail(intent, session, callback) {
                     
                 repromptText = "Would you like to hear more about other storms?  If so, please " +
                     "let me know by saying something like Tell me about Hurricane Katrina.";
-    
-                callback(sessionAttributes,
-                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
 
+                VoiceInsights.track('GetStormDetail', stormDetail.stormName, speechOutput, (err, res) => {
+                    console.log('voice insights logged' + JSON.stringify(res));
+    
+                    callback(sessionAttributes,
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                });
             }
         });
     } else {
@@ -981,3 +1100,4 @@ function buildResponse(sessionAttributes, speechletResponse) {
         response: speechletResponse
     };
 }
+
