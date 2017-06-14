@@ -4,22 +4,25 @@
       "intent": "ListStormNames"
     },
     {
-      "intent": "SetOceanPreference",
+      "intent": "CurrentYearHistory"
+    },
+    {
       "slots": [
         {
           "name": "Ocean",
           "type": "LIST_OF_OCEANS"
         }
-      ]
+      ],
+      "intent": "SetOceanPreference"
     },
     {
-      "intent": "StormsFromPriorYears",
       "slots": [
         {
           "name": "Date",
           "type": "AMAZON.DATE"
         }
-      ]
+      ],
+      "intent": "StormsFromPriorYears"
     },
     {
       "intent": "ThisYearsStorms"
@@ -28,16 +31,25 @@
       "intent": "CompleteListOfStorms"
     },
     {
-      "intent": "GetStormDetail",
       "slots": [
         {
           "name": "Storm",
           "type": "LIST_OF_STORMS"
         }
-      ]
+      ],
+      "intent": "GetStormDetail"
+    },
+    {
+      "intent": "GiveStormFact"
     },
     {
       "intent": "AMAZON.StartOverIntent"
+    },
+    {
+      "intent": "AMAZON.YesIntent"
+    },
+    {
+      "intent": "AMAZON.NoIntent"
     },
     {
       "intent": "AMAZON.HelpIntent"

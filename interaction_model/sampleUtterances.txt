@@ -1,24 +1,13 @@
-AMAZON.StartOverIntent start
-AMAZON.StartOverIntent begin
-AMAZON.StartOverIntent new
-
-GetStormDetail tell me about {Storm}
-GetStormDetail tell me more about {Storm}
-GetStormDetail tell me about Hurricane {Storm}
-GetStormDetail give me more info on {Storm}
-GetStormDetail give me more details on {Storm}
-GetStormDetail I want info about {Storm}
-GetStormDetail what about Hurricane {Storm}
-
 ListStormNames list storm names
 ListStormNames what are all the storm names
 ListStormNames say all storm names
 ListStormNames give me all of the storm names
 ListStormNames give me a list of all storm names
-
+CurrentYearHistory storm history for this year
+CurrentYearHistory storms for this year
+CurrentYearHistory what storms have happened this year
 SetOceanPreference {Ocean} ocean
 SetOceanPreference the {Ocean} ocean
-
 StormsFromPriorYears storms from prior years
 StormsFromPriorYears storm history
 StormsFromPriorYears storm history of {Date}
@@ -30,14 +19,36 @@ StormsFromPriorYears storms from {Date}
 StormsFromPriorYears {Date}
 StormsFromPriorYears what were the storms from {Date}
 StormsFromPriorYears what storms happened in {Date}
-
+ThisYearsStorms which names are for this year
 ThisYearsStorms this years storms
 ThisYearsStorms list of this years storms
+ThisYearsStorms what are the storms for this year
 ThisYearsStorms storms for this year
-ThisYearsStorms current year
+ThisYearsStorms current storms
+ThisYearsStorms What are the current storms
 ThisYearsStorms what are the storm names for this year
-
 CompleteListOfStorms complete list of this years storms
 CompleteListOfStorms complete list
 CompleteListOfStorms what is the complete list
 CompleteListOfStorms what are all the storms for this year
+GetStormDetail tell me about {Storm}
+GetStormDetail tell me more about {Storm}
+GetStormDetail tell me about Hurricane {Storm}
+GetStormDetail give me more info on {Storm}
+GetStormDetail give me more details on {Storm}
+GetStormDetail I want info about {Storm}
+GetStormDetail I want details on {Storm}
+GetStormDetail please give me information on {Storm}
+GetStormDetail what about Hurricane {Storm}
+GetStormDetail what info do you have on Hurricane {Storm}
+GiveStormFact give me a storm fact
+GiveStormFact list for me a fact about a storm
+GiveStormFact tell me a storm fact
+GiveStormFact tell me a tropical storm fact
+GiveStormFact give me a tropical storm fact
+AMAZON.StartOverIntent start
+AMAZON.StartOverIntent begin
+AMAZON.StartOverIntent new
+AMAZON.StopIntent goodbye
+AMAZON.StopIntent exit
+AMAZON.StopIntent quit
