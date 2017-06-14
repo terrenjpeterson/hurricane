@@ -36,30 +36,6 @@ var atlanticStorms = [
             "Tammy",
             "Vince",
             "Whitney"
-    //    ],
-    //    "stormYear": 2016,
-    //    "stormNames": [
-    //        "Alex", 
-    //        "Bonnie", 
-    //        "Colin",
-    //        "Danielle",
-    //        "Earl",
-    //        "Fiona",
-    //        "Gaston",
-    //        "Hermine",
-    //        "Ian",
-    //        "Julia",
-    //        "Karl",
-    //        "Lisa",
-    //        "Matthew",
-    //        "Nicole",
-    //        "Otto",
-    //        "Paula",
-    //        "Richard",
-    //        "Shary",
-    //        "Tobias",
-    //        "Virginie",
-    //        "Walter"
         ]
     }
 ];
@@ -92,33 +68,6 @@ var pacificStorms = [
             "Xina",
             "York",
             "Zelda"
-    //    ],
-    //    "stormYear": 2016,
-    //    "stormNames": [
-    //        "Agatha", 
-    //        "Blas", 
-    //        "Celia",
-    //        "Darby",
-    //        "Estelle",
-    //        "Frank",
-    //        "Georgette",
-    //        "Howard",
-    //        "Ivette",
-    //        "Javier",
-    //        "Kay",
-    //        "Lester",
-    //        "Madeline",
-    //        "Newton",
-    //        "Orlene",
-    //        "Paine",
-    //        "Roslyn",
-    //        "Seymour",
-    //        "Tina",
-    //        "Virgil",
-    //        "Winifred",
-    //        "Xavier",
-    //        "Yolanda",
-    //        "Zeke"
         ]
     }
 ];
@@ -239,6 +188,8 @@ function onIntent(intentRequest, session, callback) {
         getCompleteList(intent, session, callback);
     } else if ("GetStormDetail" === intentName) {
         getStormDetail(intent, session, callback);
+    } else if ("GiveStormFact" === intentName) {
+        getStormFact(intent, session, callback);        
     } else if ("AMAZON.StartOverIntent" === intentName) {
         getWelcomeResponse(session, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
@@ -459,36 +410,10 @@ function getCurrentYearHistory(intent, session, callback) {
     console.log("Get Current Year History");
 
     var currYearStormArray = [
-    //        {"stormName":"Alex", "ocean":"Atlantic", "level":"Hurricane"}, 
-    //        {"stormName":"Bonnie", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-    //        {"stormName":"Colin", "ocean":"Atlantic", "level":"Tropical Storm"},
-    //        {"stormName":"Danielle", "ocean":"Atlantic", "level":"Hurricane"},
-    //        {"stormName":"Earl", "ocean":"Atlantic", "level":"Tropical Storm"},             
-    //        {"stormName":"Fionna", "ocean":"Atlantic", "level":"Tropical Storm"},
-    //        {"stormName":"Gaston", "ocean":"Atlantic", "level":"Hurricane"},
-    //        {"stormName":"Hermine", "ocean":"Atlantic", "level":"Hurricane"},
-    //        {"stormName":"Ian", "ocean":"Atlantic", "level":"Tropical Storm"},
-    //        {"stormName":"Julia", "ocean":"Atlantic", "level":"Tropical Storm"},
-    //        {"stormName":"Karl", "ocean":"Atlantic", "level":"Tropical Storm"},
-    //        {"stormName":"Lisa", "ocean":"Atlantic", "level":"Tropical Storm"},
-    //        {"stormName":"Matthew", "ocean":"Atlantic", "level":"Hurricane"},
-    //        {"stormName":"Pali", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Agatha", "ocean":"Pacific", "level":"Tropical Storm"}, 
-    //        {"stormName":"Blas", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Celia", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Darby", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Estelle", "ocean":"Pacific", "level":"Tropical Storm"}, 
-    //        {"stormName":"Frank", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Georgette", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Howard", "ocean":"Pacific", "level":"Tropical Storm"}, 
-    //        {"stormName":"Ivette", "ocean":"Pacific", "level":"Tropical Storm"}, 
-    //        {"stormName":"Javier", "ocean":"Pacific", "level":"Tropical Storm"}, 
-    //        {"stormName":"Kay", "ocean":"Pacific", "level":"Tropical Storm"},
-    //        {"stormName":"Lester", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Madeline", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Newton", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Orlene", "ocean":"Pacific", "level":"Hurricane"}, 
-    //        {"stormName":"Paine", "ocean":"Pacific", "level":"Hurricane"}
+            {"stormName":"Arlene", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
+            {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"}
         ];
 
     var atlanticTropStorms = 0;
@@ -516,9 +441,12 @@ function getCurrentYearHistory(intent, session, callback) {
 
     // format response by merging the summary from the array with natural language
 
-    var speechOutput = "So far this year there have been " + atlanticHurricanes +
-        " hurricanes in the Atlantic and " + pacificHurricanes +
-        " in the Pacific. There have been " + atlanticTropStorms +
+//    var speechOutput = "So far this year there have been " + atlanticHurricanes +
+//        " hurricanes in the Atlantic and " + pacificHurricanes +
+    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
+        "in either the Atlantic or Pacific Oceans. " +
+        "There have been " + atlanticTropStorms +
+//        " in the Pacific. There have been " + atlanticTropStorms +
         " Tropical Storms in the Atlantic and " + pacificTropStorms +
         " in the Pacific. ";
 //        " I have detailed information about Hurricane Matthew. If you would like details " +
@@ -783,9 +711,12 @@ function getThisYearStorm(intent, session, callback) {
                         "storms, say Complete list of this years storms. If you would like storm history from prior years " +
                         "please say Storm History.";
                 }
-    
-                callback(sessionAttributes,
-                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));                
+
+                VoiceInsights.track('ListCurrentYearStorms', null, speechOutput, (err, res) => {
+                    console.log('voice insights logged' + JSON.stringify(res));
+                    callback(sessionAttributes,
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                });
                 
             } else {
                 console.log('there is an active storm');
@@ -885,10 +816,11 @@ function getThisYearStorm(intent, session, callback) {
                 
                 shouldEndSession = false;
 
-                //cardOutput = speechOutput;
-                
-                callback(sessionAttributes,
-                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                VoiceInsights.track('GetActiveStorm', null, speechOutput, (err, res) => {
+                    console.log('voice insights logged' + JSON.stringify(res));
+                    callback(sessionAttributes,
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                });
             }
         }
     });
@@ -1070,6 +1002,54 @@ function getStormDetail(intent, session, callback) {
     }
 }
 
+// this function provides a random fact about tropical storms or a historical storm
+function getStormFact(intent, session, callback) {
+    var shouldEndSession = false;
+    var sessionAttributes = {};
+    var cardTitle = "Storm Facts";
+    var repromptText = "If you would like another tropical storm fact, please say give me a storm fact.";
+
+    var stormFacts = [
+        'The threshold for a tropical storm is sustained winds at 39 miles per hour. Tropical storms below this level are considered a tropical depression.',
+        'The threshold for a hurricane is sustained winds at 74 miles per hour.',
+        'The Saffir–Simpson scale categories hurricanes into five levels. The classifications can provide some indication of the potential damage and flooding a hurricane will cause upon landfall.',
+        'In the Northern hemisphere, the tropical storm season begins on June 1st. Storms may begin before this date, however they are quite rare.',
+        'Category one hurricanes are defined as having sustained winds ranging from 74 to 95 miles per hour. Storms of this intensity usually cause no significant structural damage to most well-constructed permanent structures. They can topple unanchored mobile homes, as well as uproot or snap weak trees.',
+        'Category two hurricanes are defined as having sustained winds ranging from 96 to 110 miles per hour. Storms of this intensity often damage roofing material and inflict damage upon poorly constructed doors and windows.',
+        'Category three hurricanes are defined as having sustained winds ranging from 111 to 129 miles per hour. At this level, they are considered a major hurricane, and can cause some structural damage to small residences and utility buildings, particularly those of wood frame or manufactured materials.',
+        'Category four hurricanes are defined as having sustained winds ranging from 130 to 156 miles per hour. At this level, they can cause complete structural failure on small residences. Mobile and manufactured homes are often flattened. Most trees, except for the heartiest, are uprooted or snapped, isolating many areas.',
+        'Category five hurricanes are the strongest recorded, and are defined as having sustained winds above 157 miles per hour. At this level, they can cause catastophic damage if making landfall, both to structures and trees. Widespread power outages are common, and rebuilding efforts can take years.',
+        'No Category five hurricane is known to have made landfall as such in the eastern Pacific basin.',
+        'Hurricane Patricia was the most intense hurricane on record in the Western Hemisphere. On October 23rd, 2015, the maximum sustained winds were recorded at 215 mph for a one minute interval, and it recorded a pressure reading of 872 millibars. The storm lessened before hitting the Pacific coast of Mexico near Cuixmala, Jalisco, with winds of 150 mph. This made it the strongest landfalling hurricane on record along the Pacific coast of Mexico.',
+        'Hurricane Felix was the southernmost landfalling Category 5 hurricane in the Atlantic. It is also the most recent Atlantic hurricane to make landfall as a Category 5. Hurricane Felix made landfall in 2007, with initial impacts to Honduras and Nicaragua. At least 133 people were reported dead. At least 130 of them were in Nicaragua.',
+        'Hurricane Katrina was the costliest natural disaster and one of the five deadliest hurricanes in the history of the United States. Overall, at least 1,245 people died in the hurricane and subsequent floods, making it the deadliest United States hurricane since the 1928 Okeechobee hurricane. Total property damage was estimated at $108 billion in 2005 US Dollars. ',
+        'Hurricane Rita was the fourth-most intense Atlantic hurricane ever recorded and the most intense tropical cyclone ever observed in the Gulf of Mexico. Southeast Texas where Rita made landfall suffered from catastrophic-to-severe flooding and wind damage.',
+        'Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin, and was the most intense tropical cyclone recorded in the western hemisphere until Hurricane Patricia in 2015. Wilma made several landfalls, with the most destructive effects felt in the Yucatán Peninsula of Mexico, Cuba, and the US state of Florida.',
+        'The 2005 Atlantic hurricane season was the most active Atlantic hurricane season in recorded history, shattering numerous records. The impact of the season was widespread and ruinous with an estimated 3,913 deaths and record damage of about $159.2 billion.',
+        'Hurricane Hugo was a powerful Cape Verde-type hurricane that caused widespread damage and loss of life in the Leeward Islands, Puerto Rico, and the Southeast United States. It formed over the eastern Atlantic near the Cape Verde Islands on September 9, 1989. Hurricane Hugo caused 34 fatalities (most by electrocution or drowning) in the Caribbean and 27 in South Carolina, left nearly 100,000 homeless, and resulted in $10 billion in damage overall, making it the most damaging hurricane ever recorded at the time.',
+        'Hurricane Andrew was a Category 5 Atlantic hurricane that struck South Florida in August 1992, and was the most destructive hurricane in Floridas history. The storm was also ranked as the costliest hurricane in United States history until being surpassed by Katrina in 2005. Andrew caused major damage in the Bahamas and Louisiana as well, but the greatest impact was in South Florida, where it produced devastating winds with speeds as high as 165 mph.',
+        'Forming in 1969, Hurricane Camille was the second strongest U.S. landfalling hurricane in recorded history in terms of atmospheric pressure, behind the Labor Day Hurricane in 1935. The hurricane flattened nearly everything along the coast of the U.S. state of Mississippi, and caused additional flooding and deaths inland while crossing the Appalachian Mountains of Virginia.',
+        'The 1935 Labor Day Hurricane was the most intense hurricane to make landfall in the United States on record, as well as the 3rd most intense Atlantic hurricane ever. The compact and intense hurricane caused extreme damage in the upper Florida Keys, as a storm surge of approximately 18 to 20 feet swept over the low-lying islands. The hurricane also caused additional damage in northwest Florida, Georgia, and the Carolinas.',
+        'The 1938 New England Hurricane (also referred to as the Great New England Hurricane and Long Island Express) was one of the deadliest and most destructive tropical cyclones to strike New England.  It is estimated that the hurricane killed 682 people, damaged or destroyed more than 57,000 homes. Damaged trees and buildings were still seen in the affected areas as late as 1951.',
+        'Hurricane Mitch was the second deadliest Atlantic hurricane on record, after the Great Hurricane of 1780. Nearly 11,000 people were killed with over 11,000 left missing by the end of 1998. Additionally, roughly 2.7 million were left homeless as a result of the hurricane. Hurricane Mitch dropped historic amounts of rainfall in Honduras, Guatemala, and Nicaragua, with unofficial reports of up to 75 inches.',
+        'Hurricane Carol in 1953 was the strongest storm of the Atlantic hurricane season that year, and the first Category 5 hurricane in the Atlantic basin since the 1938 New England hurricane. Carol is also the first named storm to attain Category 5 status. Carol developed on August 28 off the west coast of Africa, although the Weather Bureau did not initiate advisories until five days later.',
+        'In 1992, Hurricane Iniki was the most powerful hurricane to strike the U.S. state of Hawaii in recorded history. Iniki struck the island of Kauai on September 11 at peak intensity. It had winds of 145 miles per hour. Damage was greatest on Kauai, where the hurricane destroyed more than 1,400 houses and severely damaged more than 5,000.'
+    ];
+    
+    const factIndex = Math.floor(Math.random() * stormFacts.length);
+    const randomFact = stormFacts[factIndex];
+
+    var speechOutput = "Here is your tropical storm fact. " + randomFact + " If you would like to hear another fact, please " +
+        "say something like Give me a storm fact.";
+    var cardOutput = "Tropical Storm Fact\n" + randomFact;
+
+    VoiceInsights.track('GetStormFact', null, speechOutput, (err, res) => {
+        console.log('voice insights logged' + JSON.stringify(res));
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+    });
+
+}
 // --------------- Helpers that build all of the responses -----------------------
 
 function buildSpeechletResponse(title, output, cardInfo, repromptText, shouldEndSession) {
