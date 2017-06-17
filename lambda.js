@@ -180,7 +180,7 @@ function onIntent(intentRequest, session, callback) {
         getCurrentYearHistory(intent, session, callback);
     } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2017) {
         getWhichYear(intent, session, callback);
-    } else if ("ThisYearsStorms" === intentName) {
+    } else if ("ThisYearsStorms" === intentName || "AMAZON.YesIntent" === intentName) {
         getThisYearStorm(intent, session, callback);
     } else if ("CurrentYearHistory" === intentName) {
         getCurrentYearHistory(intent, session, callback);
@@ -196,7 +196,7 @@ function onIntent(intentRequest, session, callback) {
         getHelpResponse(callback);
     } else if ("AMAZON.RepeatIntent" === intentName) {
         getWelcomeResponse(session, callback);
-    } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName) {
+    } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
         handleSessionEndRequest(callback);
     } else {
         throw "Invalid intent";
@@ -885,8 +885,9 @@ function getStormDetail(intent, session, callback) {
     var cardOutput = "";
     var repromptText = "";
 
-    var stormDetailExists = false;
+    console.log("Providing detail on storm name: " + stormName);
 
+    var stormDetailExists = false;
     var stormName = intent.slots.Storm.value;
 
     console.log("Providing detail on storm name: " + stormName);
