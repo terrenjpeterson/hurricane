@@ -221,8 +221,9 @@ function getWelcomeResponse(session, callback) {
     var cardTitle = "Welcome to Hurricane Center";
 
     var speechOutput = "Welcome to the Hurricane Center, the best source for information " +
-        "related to tropical storms, past or present. Please begin by saying something like " +
-        "Current Storms or Storms for Prior Years.";
+        "related to tropical storms, past or present. There are no active tropical storms " +
+        "right now, but if you would like to learn more about storms, please say something " +
+        "like tell me a storm fact.";
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
         "list storm names or storm history for 2012.";
     var activeStorms = false;
@@ -230,7 +231,6 @@ function getWelcomeResponse(session, callback) {
     console.log("Get Welcome Message");
     
     // initialize voice analytics 
-    console.log("initialize session");
     VoiceInsights.initialize(session, VI_APP_TOKEN);
 
     // check current data to see if there are active storms and if so change the welcome message
@@ -239,17 +239,14 @@ function getWelcomeResponse(session, callback) {
     var getParams = {Bucket : stormDataBucket,
                     Key : 'currStorms.json'};
 
-    //console.log('attempt to pull an object from an s3 bucket' + JSON.stringify(getParams));
-
     s3.getObject(getParams, function(err, data) {
         if(err)
             console.log('Error getting history data : ' + err);
         else {
             var returnData = eval('(' + data.Body + ')');
-            //console.log('Successfully retrieved history data : ' + data.Body);
             //
             if (returnData[0].activeStorms === false) {
-                console.log('no active storms');
+                console.log('logical error - no active storms');
             } else {
                 console.log('there is an active storm');
                 // parse through the array and build an appropriate welcome message
@@ -257,7 +254,7 @@ function getWelcomeResponse(session, callback) {
                 var storms = returnData[0].storms;
                 var activeStormAtlantic = false;
                 var activeStormPacific = false;
-                // rotate through the array of current storm data
+                // rotate through the array of current storm data to determine where the active storms are
                 for (i = 0; i < storms.length; i++) {
                     if (storms[i].formed) {
                         if (storms[i].ocean == "Atlantic")
@@ -276,11 +273,9 @@ function getWelcomeResponse(session, callback) {
                 speechOutput = speechOutput + "To hear more about the storm activity, say current storm detail.";
             }
         }
-        //console.log('speech output : ' + speechOutput);
 
         VoiceInsights.track('WelcomeMessage', null, speechOutput, (err, res) => {
 	        console.log('voice insights logged' + JSON.stringify(res));
-	        
 	        callback(sessionAttributes,
                 buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
         });
@@ -295,7 +290,8 @@ function getHelpResponse(callback) {
     var speechOutput = "The Hurricane Center provides information about tropical storms. " +
         "If you would like to hear about storms from this year, say What are storms from this year. " +
         "For information related to storms from prior years, please say What is the storm history " +
-        "for a specific year.";
+        "for a specific year. If you would like to hear a fact about tropical storms, please say " +
+        "tell me a storm fact.";
 
     console.log("Get Help Response");
         
@@ -306,7 +302,6 @@ function getHelpResponse(callback) {
 
     VoiceInsights.track('HelpMessage', null, speechOutput, (err, res) => {
 	    console.log('voice insights logged' + JSON.stringify(res));
-
         callback(sessionAttributes,
             buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
     });
@@ -1081,4 +1076,3 @@ function buildResponse(sessionAttributes, speechletResponse) {
         response: speechletResponse
     };
 }
-
