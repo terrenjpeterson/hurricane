@@ -1,5 +1,5 @@
 /**
- * This skill provides details about hurricanes through 2016, both prior years as well as current
+ * This skill provides details about hurricanes, both prior years as well as current
  */
 
 var aws = require('aws-sdk');
@@ -270,7 +270,7 @@ function getWelcomeResponse(session, callback) {
                     speechOutput = speechOutput + "There is currently an active storm in the Pacific Ocean. ";
                 else if (activeStormAtlantic === true && activeStormPacific === true)
                     speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
-                speechOutput = speechOutput + "To hear more about the storm activity, say current storm detail.";
+                speechOutput = speechOutput + "Would you like to hear more details?";
             }
         }
 
