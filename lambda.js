@@ -1,5 +1,5 @@
 /**
- * This skill provides details about hurricanes, both prior years as well as current
+ * This skill provides details about hurricanes through 2016, both prior years as well as current
  */
 
 var aws = require('aws-sdk');
@@ -133,6 +133,7 @@ exports.handler = function (event, context) {
                     context.succeed(buildResponse(sessionAttributes, speechletResponse));
                 });
         } else if (event.request.type === "SessionEndedRequest") {
+            console.log("session ended request received");
             onSessionEnded(event.request, event.session);
             context.succeed();
         }
@@ -170,6 +171,7 @@ function onIntent(intentRequest, session, callback) {
 
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
+        country = intentRequest.locale;        
 
     // Dispatch to the individual skill handlers
     if ("ListStormNames" === intentName) {
@@ -181,6 +183,7 @@ function onIntent(intentRequest, session, callback) {
     } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2017) {
         getWhichYear(intent, session, callback);
     } else if ("ThisYearsStorms" === intentName || "AMAZON.YesIntent" === intentName) {
+        console.log("Intent Name: " + intentName + " From: " + country);
         getThisYearStorm(intent, session, callback);
     } else if ("CurrentYearHistory" === intentName) {
         getCurrentYearHistory(intent, session, callback);
@@ -246,31 +249,46 @@ function getWelcomeResponse(session, callback) {
             var returnData = eval('(' + data.Body + ')');
             //
             if (returnData[0].activeStorms === false) {
-                console.log('logical error - no active storms');
+                console.log('welcome message - no active storms');
             } else {
-                console.log('there is an active storm');
+                console.log('there is an active storm: ' + JSON.stringify(returnData[0].storms));
                 // parse through the array and build an appropriate welcome message
                 speechOutput = "Welcome to the Hurricane Center. ";
                 var storms = returnData[0].storms;
                 var activeStormAtlantic = false;
                 var activeStormPacific = false;
+                var activeStorms = 0;
+                var activeStormNames = [];
                 // rotate through the array of current storm data to determine where the active storms are
                 for (i = 0; i < storms.length; i++) {
+                    console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
                     if (storms[i].formed) {
+                        activeStormNames.push(returnData[0].storms[i].stormType + " " + returnData[0].storms[i].stormName);
+                        activeStorms++;
                         if (storms[i].ocean == "Atlantic")
                             activeStormAtlantic = true;
                         else
                             activeStormPacific = true;
                     }
                 }
-                // build a different message depending on where the oceans are at
-                if (activeStormAtlantic === true & activeStormPacific === false)
-                    speechOutput = speechOutput + "There is currently an active storm in the Atlantic Ocean. ";
-                else if (activeStormAtlantic === false & activeStormPacific === true) 
+                console.log("total number of storms: " + activeStorms);
+                console.log("storm names: " + JSON.stringify(activeStormNames));
+                // build a different message depending on where the oceans are at and how many are active
+                if (activeStormAtlantic === true & activeStormPacific === false) {
+                    if (activeStorms === 1) {
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active in the Atlantic Ocean. ";
+                    } else if (activeStorms === 2) {
+                        speechOutput = speechOutput + activeStormNames[0] + " and " + activeStormNames[1] + " are currently " +
+                            "active in the Atlantic Ocean. ";
+                    } else {
+                        speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Atlantic Ocean. ";
+                    }
+                } else if (activeStormAtlantic === false & activeStormPacific === true) 
                     speechOutput = speechOutput + "There is currently an active storm in the Pacific Ocean. ";
                 else if (activeStormAtlantic === true && activeStormPacific === true)
                     speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
-                speechOutput = speechOutput + "Would you like to hear more details?";
+                speechOutput = speechOutput + "Please say yes if you would like to hear more details.";
+                repromptText = "There are currently active tropical storms. To hear specific details about them, just say yes.";
             }
         }
 
@@ -347,8 +365,10 @@ function setOceanInSession(intent, session, callback) {
             "Please say either Atlantic or Pacific.";
     }
 
-    callback(sessionAttributes,
-         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    VoiceInsights.track('SetOceanPref', null, speechOutput, (err, res) => {
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+    });
 }
 
 function storeOceanAttributes(ocean) {
@@ -395,7 +415,7 @@ function getStormNames(intent, session, callback) {
     });
 }
 
-// Sets the ocean name in case it has not done so already
+// This highlights the summary of storms for the current year - 2017
 function getCurrentYearHistory(intent, session, callback) {
     var oceanPreference;
     var sessionAttributes = {};
@@ -406,6 +426,8 @@ function getCurrentYearHistory(intent, session, callback) {
 
     var currYearStormArray = [
             {"stormName":"Arlene", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Bret", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Cindy", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
             {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
             {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"}
@@ -443,11 +465,11 @@ function getCurrentYearHistory(intent, session, callback) {
         "There have been " + atlanticTropStorms +
 //        " in the Pacific. There have been " + atlanticTropStorms +
         " Tropical Storms in the Atlantic and " + pacificTropStorms +
-        " in the Pacific. ";
+        " in the Pacific. " +
 //        " I have detailed information about Hurricane Matthew. If you would like details " +
 //        " please say, Details on Hurricane Matthew. " +
-//        " If you would like to hear about current active storms please say" +
-//        " Current Storms and I will give a detailed overview of what is currently active.";
+        " If you would like to hear about current active storms please say " +
+        " Current Storms and I will give a detailed overview of what is currently active. ";
         
     var cardOutput = "Atlantic Ocean\n" + atlanticHurricanes +
         " Hurricanes\n" + atlanticTropStorms +
@@ -463,7 +485,6 @@ function getCurrentYearHistory(intent, session, callback) {
 
     VoiceInsights.track('GetCurrentYearHistory', null, speechOutput, (err, res) => {
         console.log('voice insights logged' + JSON.stringify(res));
-
         callback(sessionAttributes,
             buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
     });
@@ -493,8 +514,8 @@ function getWhichYear(intent, session, callback) {
         sessionAttributes = storeOceanAttributes(oceanPreference);
     }
 
-    console.log("session attributes: " + JSON.stringify(session.attributes));
-    console.log("intent attributes: " + JSON.stringify(intent.slots.Date));
+    //console.log("session attributes: " + JSON.stringify(session.attributes));
+    //console.log("intent attributes: " + JSON.stringify(intent.slots.Date));
 
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
@@ -520,18 +541,14 @@ function getWhichYear(intent, session, callback) {
                     console.log('Error getting history data : ' + err)
                 else {
                     // data retrieval was successfull - now parse through it and provide back in the reponse.
-                    //console.log('data retrieved: ' + data.Body);
-                    
                     var historyArray = eval('(' + data.Body + ')');
 
                     // parse through the history and find the data for the requested year
                     for (j = 0; j < historyArray.length; j++) {
-                        console.log('year: ' + historyArray[j].stormYear);
+                        //console.log('year: ' + historyArray[j].stormYear);
                         if (historyArray[j].stormYear == requestYear)
                             var stormHistoryArray = historyArray[j];
                     }
-                    
-                    //console.log('using data' + JSON.stringify(stormHistoryArray));
                     
                     // build the response back based on stringing together all information for the year
                     var stormReading = {};
@@ -540,8 +557,6 @@ function getWhichYear(intent, session, callback) {
                     speechOutput = 'In the ' + oceanPreference + ' ocean ' +
                         'there were ' + stormHistoryArray.storms.length + 
                         ' storms in ' + stormHistoryArray.stormYear + '. ';
-
-                    //stormReading = stormReading + 'The storm names were ';
 
                     var hurricaneNames = [];
                     var tropicalStormNames = [];
@@ -557,8 +572,6 @@ function getWhichYear(intent, session, callback) {
                             moreStormData.push(stormHistoryArray.storms[i]);
                         }
                     }
-
-                    //console.log('process hurricane array' + JSON.stringify(hurricaneNames));
 
                     // now go through each array and create sentance structure
                     speechOutput = speechOutput + "The hurricane names are ";
@@ -596,7 +609,6 @@ function getWhichYear(intent, session, callback) {
 
                     VoiceInsights.track('StormHistory', stormHistoryArray.stormYear, speechOutput, (err, res) => {
                         console.log('voice insights logged' + JSON.stringify(res));
-
                         callback(sessionAttributes,
                             buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
                     });
@@ -607,7 +619,7 @@ function getWhichYear(intent, session, callback) {
             console.log('Year selected for storm history outside of available data');
 
             speechOutput = "Sorry, I don't have information for " + requestYear + ". " +
-                "I do have information on storms between 2005 and 2017.  Please let me " +
+                "I do have information on storms between 1991 and 2017.  Please let me " +
                 "know which year I can provide within that range.";
 
             repromptText = "Please state a year between 1991 and 2017. " +
@@ -618,12 +630,12 @@ function getWhichYear(intent, session, callback) {
             };
         }
     else {
-        console.log("Reprompt user to select a year for storm history");
+        console.log("No year provided. Reprompt user to select a year for storm history");
         
-        speechOutput = "Which year would you like storm history for?";
-
+        speechOutput = "Which year would you like storm history for? If you would like me to check for " +
+            "storms that are currently active, please say something like current storms. ";
         repromptText = "Please state a year you would like to hear storm history for. " +
-            "For example say Storms for 2012.";
+            "For example say Storms for 2012, or for storms that are currently active, say current storms. ";
 
         callback(sessionAttributes,
             buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
@@ -716,7 +728,7 @@ function getThisYearStorm(intent, session, callback) {
             } else {
                 console.log('there is an active storm');
                 // parse through the array and build an appropriate welcome message
-                speechOutput = "There are currently active storms. ";
+                speechOutput = "Here is the latest forecast. ";
                 var storms = returnData[0].storms;
 
                 // go through the returned array and build language and cards depicting the storm data.
@@ -880,7 +892,7 @@ function getStormDetail(intent, session, callback) {
     var cardOutput = "";
     var repromptText = "";
 
-    console.log("Providing detail on storm name: " + stormName);
+    //console.log("Providing detail on storm name: " + stormName);
 
     var stormDetailExists = false;
     var stormName = intent.slots.Storm.value;
@@ -982,16 +994,21 @@ function getStormDetail(intent, session, callback) {
     } else {
     
         // this will be processed in case there wasn't a matching storm name to provide details about
-        if (stormName == null)
-            var speechOutput = "Please provide a storm name to hear details.";
-        else
+        if (stormName == null) {
+            console.log("No storm name provided - redirect with a response message.")
+            var speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
+                "say current storms. ";
+        } else {
+            console.log("Storm name " + stormName + " did not exist in records. Respond back with message as such.")
             var speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
                 "Please provide a different storm name that you would like information on. For example, " +
                 "say Tell me about Hurricane Katrina.";
+        }
     
         cardOutput = speechOutput;
     
-        var repromptText = "Would you like to hear more about other storms?";
+        var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
+            "the storm name. If you want me to check on any current storms, please say current storms.";
     
         callback(sessionAttributes,
              buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
@@ -1076,3 +1093,4 @@ function buildResponse(sessionAttributes, speechletResponse) {
         response: speechletResponse
     };
 }
+
