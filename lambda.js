@@ -273,7 +273,7 @@ function getWelcomeResponse(session, callback) {
                 }
                 console.log("total number of storms: " + activeStorms);
                 console.log("storm names: " + JSON.stringify(activeStormNames));
-                speechOutput = speechOutput + "<break time=\"1s\"/>";
+                //speechOutput = speechOutput + "<break time=\"1s\"/>";
                 // build a different message depending on where the oceans are at and how many are active
                 if (activeStormAtlantic === true && activeStormPacific === false) {
                     if (activeStorms === 1) {
@@ -284,11 +284,18 @@ function getWelcomeResponse(session, callback) {
                     } else {
                         speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Atlantic Ocean. ";
                     }
-                } else if (activeStormAtlantic === false && activeStormPacific === true) 
-                    speechOutput = speechOutput + "There is currently an active storm in the Pacific Ocean. ";
-                else if (activeStormAtlantic === true && activeStormPacific === true)
+                } else if (activeStormAtlantic === false && activeStormPacific === true) {
+                    if (activeStorms === 1) {
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active in the Pacific Ocean. ";
+                    } else if (activeStorms === 2) {
+                        speechOutput = speechOutput + activeStormNames[0] + " and " + activeStormNames[1] + " are currently " +
+                            "active in the Pacific Ocean. ";
+                    } else {
+                        speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Pacific Ocean. ";
+                    }
+                } else if (activeStormAtlantic === true && activeStormPacific === true)
                     speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
-                speechOutput = speechOutput + "<break time=\"1s\"/>";
+                //speechOutput = speechOutput + "<break time=\"1s\"/>";
                 speechOutput = speechOutput + "Please say yes if you would like to hear more details.";
                 repromptText = "There are currently active tropical storms. To hear specific details about them, just say yes.";
             }
@@ -297,7 +304,7 @@ function getWelcomeResponse(session, callback) {
         VoiceInsights.track('WelcomeMessage', null, speechOutput, (err, res) => {
 	        console.log('voice insights logged' + JSON.stringify(res));
 	        callback(sessionAttributes,
-                buildAudioResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+                buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
         });
     });
 }
@@ -351,7 +358,7 @@ function setOceanInSession(intent, session, callback) {
     var speechOutput = "";
 
     console.log("Setting ocean preference");
-    console.log("preferred ocean : " + preferredOcean);
+    console.log("preferred ocean : " + JSON.stringify(preferredOcean));
 
     if ("Atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
         var ocean = preferredOcean.value.charAt(0).toUpperCase() + preferredOcean.value.slice(1);
@@ -432,7 +439,8 @@ function getCurrentYearHistory(intent, session, callback) {
             {"stormName":"Cindy", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
             {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"}
+            {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Dora", "ocean":"Pacific", "level":"Tropical Storm"}
         ];
 
     var atlanticTropStorms = 0;
@@ -460,14 +468,14 @@ function getCurrentYearHistory(intent, session, callback) {
 
     // format response by merging the summary from the array with natural language
 
+    var speechOutput = "It is early in the season, and Hurricane Dora in the Pacific has been " +
+        "the only storm to reach hurricane status. ";
 //    var speechOutput = "So far this year there have been " + atlanticHurricanes +
 //        " hurricanes in the Atlantic and " + pacificHurricanes +
-    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
-        "in either the Atlantic or Pacific Oceans. " +
-        "There have been " + atlanticTropStorms +
-//        " in the Pacific. There have been " + atlanticTropStorms +
-        " Tropical Storms in the Atlantic and " + pacificTropStorms +
-        " in the Pacific. " +
+//    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
+//        "in either the Atlantic or Pacific Oceans. " +
+        speechOutput = speechOutput + "There have been " + atlanticTropStorms +
+        " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
 //        " I have detailed information about Hurricane Matthew. If you would like details " +
 //        " please say, Details on Hurricane Matthew. " +
         " If you would like to hear about current active storms please say " +
@@ -728,8 +736,9 @@ function getThisYearStorm(intent, session, callback) {
                 });
                 
             } else {
-                console.log('there is an active storm');
+                console.log('read detail about an active storm');
                 var storms = returnData[0].storms;
+                var latestUpdate = returnData[0].latestUpdate;
                 
                 replyActiveStorms(storms, returnData, intent, session, callback);
 
@@ -751,7 +760,7 @@ function replyActiveStorms(storms, returnData, intent, session, callback) {
 
     // parse through the array and build an appropriate welcome message
     var speechOutput = "Here is the latest forecast. ";
-        speechOutput = speechOutput + "<break time=\"1s\"/>";
+    //    speechOutput = speechOutput + "<break time=\"1s\"/>";
                 
     // go through the returned array and build language and cards depicting the storm data.
     for (i = 0; i < storms.length; i++) {
@@ -764,7 +773,7 @@ function replyActiveStorms(storms, returnData, intent, session, callback) {
                 storms[i].stormType + " " + storms[i].stormName + " is currently " +
                 "producing winds of " + storms[i].peakWinds + " miles per hour. " +
                 "The storm center has a low pressure of " + storms[i].pressure + " millibars. ";
-            speechOutput = speechOutput + "<break time=\"1s\"/>";
+            //speechOutput = speechOutput + "<break time=\"1s\"/>";
 
             // this will only be processed if there is a tropical storm warning
                         
@@ -799,7 +808,7 @@ function replyActiveStorms(storms, returnData, intent, session, callback) {
                 " at " + storms[i].movement.speed + " miles per hour, and this general motion is expected to " +
                 storms[i].movement.forecast + ". ";
                     
-            speechOutput = speechOutput + "<break time=\"1s\"/>";
+            //speechOutput = speechOutput + "<break time=\"1s\"/>";
 
             // this adds the specific details for the forecast
 
@@ -817,7 +826,7 @@ function replyActiveStorms(storms, returnData, intent, session, callback) {
 
             // this closes the dialog highlighting when the next update will be provided
                         
-            speechOutput = speechOutput + "<break time=\"1s\"/>";
+            //speechOutput = speechOutput + "<break time=\"1s\"/>";
             speechOutput = speechOutput + "The next complete advisory will be at " + returnData[0].nextUpdate + ". ";
 
             // format card data
@@ -854,7 +863,7 @@ function replyActiveStorms(storms, returnData, intent, session, callback) {
     VoiceInsights.track('GetActiveStorm', null, speechOutput, (err, res) => {
         console.log('voice insights logged' + JSON.stringify(res));
         callback(sessionAttributes,
-            buildAudioResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
     });
 }
 
