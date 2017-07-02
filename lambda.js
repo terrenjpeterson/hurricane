@@ -116,6 +116,8 @@ exports.handler = function (event, context) {
         }
         */
 
+        console.log(JSON.stringify(event));
+
         if (event.session.new) {
             onSessionStarted({requestId: event.request.requestId}, event.session);
         }
@@ -123,12 +125,14 @@ exports.handler = function (event, context) {
         if (event.request.type === "LaunchRequest") {
             onLaunch(event.request,
                 event.session,
+                event.context,
                 function callback(sessionAttributes, speechletResponse) {
                     context.succeed(buildResponse(sessionAttributes, speechletResponse));
                 });
         } else if (event.request.type === "IntentRequest") {
             onIntent(event.request,
                 event.session,
+                event.context,
                 function callback(sessionAttributes, speechletResponse) {
                     context.succeed(buildResponse(sessionAttributes, speechletResponse));
                 });
@@ -153,21 +157,50 @@ function onSessionStarted(sessionStartedRequest, session) {
 /**
  * Called when the user launches the skill without specifying what they want.
  */
-function onLaunch(launchRequest, session, callback) {
-    console.log("onLaunch requestId=" + launchRequest.requestId +
-        ", sessionId=" + session.sessionId);
+function onLaunch(launchRequest, session, context, callback) {
+    console.log("onLaunch requestId=" + launchRequest.requestId + ", sessionId=" + session.sessionId);
+
+    // need to determine which type of device is being used to remain backward compatibility
+    var device = {};
+    
+    if (context) {
+        console.log("Supported Interfaces:" + JSON.stringify(context.System.device.supportedInterfaces));
+        if (context.System.device.supportedInterfaces.Display) {
+            device.type = "Show";
+        } else {
+            device.type = "Legacy";
+        }
+    } else {
+        console.log("Test Dummy - no device info");
+        device.type = "Test";
+    }
 
     // Dispatch to your skill's launch.
-    getWelcomeResponse(session, callback);
+    getWelcomeResponse(session, device, callback);
 }
 
 /**
  * Called when the user specifies an intent for this skill. This drives
  * the main logic for the function.
  */
-function onIntent(intentRequest, session, callback) {
+function onIntent(intentRequest, session, context, callback) {
     console.log("onIntent requestId=" + intentRequest.requestId +
         ", sessionId=" + session.sessionId);
+
+    // need to determine which type of device is being used to remain backward compatibility
+    var device = {};
+    
+    if (context) {
+        console.log("Supported Interfaces:" + JSON.stringify(context.System.device.supportedInterfaces));
+        if (context.System.device.supportedInterfaces.Display) {
+            device.type = "Show";
+        } else {
+            device.type = "Legacy";
+        }
+    } else {
+        console.log("Test Dummy - no device info");
+        device.type = "Test";
+    }
 
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
@@ -194,11 +227,11 @@ function onIntent(intentRequest, session, callback) {
     } else if ("GiveStormFact" === intentName) {
         getStormFact(intent, session, callback);        
     } else if ("AMAZON.StartOverIntent" === intentName) {
-        getWelcomeResponse(session, callback);
+        getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
         getHelpResponse(callback);
     } else if ("AMAZON.RepeatIntent" === intentName) {
-        getWelcomeResponse(session, callback);
+        getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
         handleSessionEndRequest(callback);
     } else {
@@ -218,7 +251,7 @@ function onSessionEnded(sessionEndedRequest, session) {
 // --------------- Base Functions that are invoked based on standard utterances -----------------------
 
 // this is the function that gets called to format the response to the user when they first boot the app
-function getWelcomeResponse(session, callback) {
+function getWelcomeResponse(session, device, callback) {
     var sessionAttributes = {};
     var shouldEndSession = false;
     var cardTitle = "Welcome to Hurricane Center";
@@ -232,7 +265,7 @@ function getWelcomeResponse(session, callback) {
         "list storm names or storm history for 2013.";
     var activeStorms = false;
 
-    console.log("Get Welcome Message");
+    console.log("Get Welcome Message - Device Type: " + JSON.stringify(device.type));
     
     // initialize voice analytics 
     VoiceInsights.initialize(session, VI_APP_TOKEN);
