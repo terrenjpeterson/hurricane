@@ -208,32 +208,32 @@ function onIntent(intentRequest, session, context, callback) {
 
     // Dispatch to the individual skill handlers
     if ("ListStormNames" === intentName) {
-        getStormNames(intent, session, callback);
+        getStormNames(intent, session, device, callback);
     } else if ("SetOceanPreference" === intentName) {
-        setOceanInSession(intent, session, callback);
+        setOceanInSession(intent, session, device, callback);
     } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2017) {
-        getCurrentYearHistory(intent, session, callback);
+        getCurrentYearHistory(intent, session, device, callback);
     } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2017) {
-        getWhichYear(intent, session, callback);
+        getWhichYear(intent, session, device, callback);
     } else if ("ThisYearsStorms" === intentName || "AMAZON.YesIntent" === intentName) {
         console.log("Intent Name: " + intentName + " From: " + country);
-        getThisYearStorm(intent, session, callback);
+        getThisYearStorm(intent, session, device, callback);
     } else if ("CurrentYearHistory" === intentName) {
-        getCurrentYearHistory(intent, session, callback);
+        getCurrentYearHistory(intent, session, device, callback);
     } else if ("CompleteListOfStorms" === intentName) {
-        getCompleteList(intent, session, callback);
+        getCompleteList(intent, session, device, callback);
     } else if ("GetStormDetail" === intentName) {
-        getStormDetail(intent, session, callback);
+        getStormDetail(intent, session, device, callback);
     } else if ("GiveStormFact" === intentName) {
-        getStormFact(intent, session, callback);        
+        getStormFact(intent, session, device, callback);        
     } else if ("AMAZON.StartOverIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
-        getHelpResponse(callback);
+        getHelpResponse(device, callback);
     } else if ("AMAZON.RepeatIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
-        handleSessionEndRequest(callback);
+        handleSessionEndRequest(device, callback);
     } else {
         throw "Invalid intent";
     }
@@ -339,13 +339,13 @@ function getWelcomeResponse(session, device, callback) {
         VoiceInsights.track('WelcomeMessage', null, speechOutput, (err, res) => {
 	        console.log('voice insights logged' + JSON.stringify(res));
 	        callback(sessionAttributes,
-                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
         });
     });
 }
 
 // this is the function that gets called to format the response to the user when they ask for help
-function getHelpResponse(callback) {
+function getHelpResponse(device, callback) {
     var sessionAttributes = {};
     var cardTitle = "Help";
     // this will be what the user hears after asking for help
@@ -365,12 +365,12 @@ function getHelpResponse(callback) {
     VoiceInsights.track('HelpMessage', null, speechOutput, (err, res) => {
 	    console.log('voice insights logged' + JSON.stringify(res));
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
     });
 }
 
 // this is the function that gets called to format the response when the user is done
-function handleSessionEndRequest(callback) {
+function handleSessionEndRequest(device, callback) {
     var cardTitle = "Thanks for using Hurricane Center";
     var speechOutput = "Thank you for checking in with the Hurricane Center. Have a nice day!";
     // Setting this to true ends the session and exits the skill.
@@ -379,12 +379,12 @@ function handleSessionEndRequest(callback) {
     VoiceInsights.track('EndMessage', null, speechOutput, (err, res) => {
 	    console.log('voice insights logged' + JSON.stringify(res));
 
-        callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, shouldEndSession));
+        callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, device, shouldEndSession));
     });
 }
 
 // Sets the ocean in the session and prepares the speech to reply to the user.
-function setOceanInSession(intent, session, callback) {
+function setOceanInSession(intent, session, device, callback) {
     var cardTitle = "Hurricane Center";
     var preferredOcean = intent.slots.Ocean;
     var repromptText = "";
@@ -411,7 +411,7 @@ function setOceanInSession(intent, session, callback) {
 
     VoiceInsights.track('SetOceanPref', null, speechOutput, (err, res) => {
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
     });
 }
 
@@ -422,7 +422,7 @@ function storeOceanAttributes(ocean) {
 }
 
 // Sets the ocean name in case it has not done so already
-function getStormNames(intent, session, callback) {
+function getStormNames(intent, session, device, callback) {
     var oceanPreference;
     // Setting repromptText to null signifies that we do not want to reprompt the user.
     // If the user does not respond or says something that is not understood, the session
@@ -455,12 +455,12 @@ function getStormNames(intent, session, callback) {
         console.log('voice insights logged' + JSON.stringify(res));
 
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
     });
 }
 
 // This highlights the summary of storms for the current year - 2017
-function getCurrentYearHistory(intent, session, callback) {
+function getCurrentYearHistory(intent, session, device, callback) {
     var oceanPreference;
     var sessionAttributes = {};
     var shouldEndSession = false;
@@ -531,14 +531,14 @@ function getCurrentYearHistory(intent, session, callback) {
     VoiceInsights.track('GetCurrentYearHistory', null, speechOutput, (err, res) => {
         console.log('voice insights logged' + JSON.stringify(res));
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
     });
 }
 
 // This function returns storm history. It checks to make sure that the year one where data
 // can be provided back, and if so pulls it from an S3 bucket. The data is parsed and a response
 // is formatted
-function getWhichYear(intent, session, callback) {
+function getWhichYear(intent, session, device, callback) {
     var oceanPreference;
     var shouldEndSession = false;
     var sessionAttributes = {};
@@ -655,7 +655,7 @@ function getWhichYear(intent, session, callback) {
                     VoiceInsights.track('StormHistory', stormHistoryArray.stormYear, speechOutput, (err, res) => {
                         console.log('voice insights logged' + JSON.stringify(res));
                         callback(sessionAttributes,
-                            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
                     });
                 };
             });
@@ -671,7 +671,7 @@ function getWhichYear(intent, session, callback) {
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
-                buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+                buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
             };
         }
     else {
@@ -683,12 +683,12 @@ function getWhichYear(intent, session, callback) {
             "For example say Storms for 2012, or for storms that are currently active, say current storms. ";
 
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
     }
 }
 
 // this function gets information about this years storms
-function getThisYearStorm(intent, session, callback) {
+function getThisYearStorm(intent, session, device, callback) {
     var oceanPreference;
     var repromptText = "";
     var shouldEndSession = false;
@@ -767,7 +767,7 @@ function getThisYearStorm(intent, session, callback) {
                 VoiceInsights.track('ListCurrentYearStorms', null, speechOutput, (err, res) => {
                     console.log('voice insights logged' + JSON.stringify(res));
                     callback(sessionAttributes,
-                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
                 });
                 
             } else {
@@ -775,7 +775,7 @@ function getThisYearStorm(intent, session, callback) {
                 var storms = returnData[0].storms;
                 var latestUpdate = returnData[0].latestUpdate;
                 
-                replyActiveStorms(storms, returnData, intent, session, callback);
+                replyActiveStorms(storms, returnData, intent, session, device, callback);
 
             }
         }
@@ -783,7 +783,7 @@ function getThisYearStorm(intent, session, callback) {
 }
 
 // this function prepares the response on active storms
-function replyActiveStorms(storms, returnData, intent, session, callback) {
+function replyActiveStorms(storms, returnData, intent, session, device, callback) {
     var sessionAttributes = {};
     var cardOutput = "";
     var cardTitle = "Storm Information for 2017";
@@ -898,12 +898,12 @@ function replyActiveStorms(storms, returnData, intent, session, callback) {
     VoiceInsights.track('GetActiveStorm', null, speechOutput, (err, res) => {
         console.log('voice insights logged' + JSON.stringify(res));
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
     });
 }
 
 // this function prepares the response when the user requests a full list of storm names
-function getCompleteList(intent, session, callback) {
+function getCompleteList(intent, session, device, callback) {
     var oceanPreference;
     var repromptText = "";
     var shouldEndSession = false;
@@ -947,14 +947,13 @@ function getCompleteList(intent, session, callback) {
 
     VoiceInsights.track('GetCompleteList', null, speechOutput, (err, res) => {
         console.log('voice insights logged' + JSON.stringify(res));
-
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
     });
 }
 
 // this function provides details about a particular storm
-function getStormDetail(intent, session, callback) {
+function getStormDetail(intent, session, device, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var cardTitle = "Storm Details";
@@ -1056,7 +1055,7 @@ function getStormDetail(intent, session, callback) {
                     console.log('voice insights logged' + JSON.stringify(res));
     
                     callback(sessionAttributes,
-                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
                 });
             }
         });
@@ -1080,12 +1079,12 @@ function getStormDetail(intent, session, callback) {
             "the storm name. If you want me to check on any current storms, please say current storms.";
     
         callback(sessionAttributes,
-             buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+             buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
     }
 }
 
 // this function provides a random fact about tropical storms or a historical storm
-function getStormFact(intent, session, callback) {
+function getStormFact(intent, session, device, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
     var cardTitle = "Storm Facts";
@@ -1128,56 +1127,77 @@ function getStormFact(intent, session, callback) {
     VoiceInsights.track('GetStormFact', null, speechOutput, (err, res) => {
         console.log('voice insights logged' + JSON.stringify(res));
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
     });
 
 }
 // --------------- Helpers that build all of the responses -----------------------
 
-function buildSpeechletResponse(title, output, cardInfo, repromptText, shouldEndSession) {
+function buildSpeechletResponse(title, output, cardInfo, repromptText, device, shouldEndSession) {
     console.log("build speechlet response");
-    return {
-        outputSpeech: {
-            type: "PlainText",
-            text: output
-        },
-        card: {
-            type: "Simple",
-            title: title,
-            content: cardInfo
-        },
-        reprompt: {
+    if (device.type === "Legacy") {
+        return {
             outputSpeech: {
                 type: "PlainText",
-                text: repromptText
-            }
-        },
-        directives: [
-            {
-            type: "Display.RenderTemplate",
-            template: {
-                type: "BodyTemplate1",
-                token: "T123",
-                backButton: "HIDDEN",
-                backgroundImage: {
-                    contentDescription: "StormPhoto",
-                    sources: [
-                        {
-                            url: "https://s3.amazonaws.com/hurricane-data/hurricaneBackground.png"
+                text: output
+            },
+            card: {
+                type: "Simple",
+                title: title,
+                content: cardInfo
+            },
+            reprompt: {
+                outputSpeech: {
+                    type: "PlainText",
+                    text: repromptText
+                }
+            },
+            shouldEndSession: shouldEndSession
+        };
+    } else {
+        return {
+            outputSpeech: {
+                type: "PlainText",
+                text: output
+            },
+            card: {
+                type: "Simple",
+                title: title,
+                content: cardInfo
+            },
+            reprompt: {
+                outputSpeech: {
+                    type: "PlainText",
+                    text: repromptText
+                }
+            },
+            directives: [
+                {
+                type: "Display.RenderTemplate",
+                template: {
+                    type: "BodyTemplate1",
+                    token: "T123",
+                    backButton: "HIDDEN",
+                    backgroundImage: {
+                        contentDescription: "StormPhoto",
+                        sources: [
+                            {
+                                url: "https://s3.amazonaws.com/hurricane-data/hurricaneBackground.png"
+                            }
+                        ]
+                    },
+                    title: "Hurricane Center",
+                    textContent: {
+                        primaryText: {
+                            text: cardInfo,
+                            type: "PlainText"
                         }
-                    ]
-                },
-                title: "Hurricane Center",
-                textContent: {
-                    primaryText: {
-                        text: cardInfo,
-                        type: "PlainText"
                     }
                 }
-            }
-        }],
-        shouldEndSession: shouldEndSession
-    };
+            }],
+            shouldEndSession: shouldEndSession
+        };        
+    }
 }
 
 function buildAudioResponse(title, output, cardInfo, repromptText, shouldEndSession) {
