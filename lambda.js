@@ -223,12 +223,13 @@ function getWelcomeResponse(session, callback) {
     var shouldEndSession = false;
     var cardTitle = "Welcome to Hurricane Center";
 
+    var cardOutput = "No Current Storms in either the Atlantic or Pacific Ocean.";
     var speechOutput = "Welcome to the Hurricane Center, the best source for information " +
         "related to tropical storms, past or present. There are no active tropical storms " +
         "right now, but if you would like to learn more about storms, please say something " +
         "like tell me a storm fact.";
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
-        "list storm names or storm history for 2012.";
+        "list storm names or storm history for 2013.";
     var activeStorms = false;
 
     console.log("Get Welcome Message");
@@ -296,6 +297,7 @@ function getWelcomeResponse(session, callback) {
                 } else if (activeStormAtlantic === true && activeStormPacific === true)
                     speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
                 //speechOutput = speechOutput + "<break time=\"1s\"/>";
+                cardOutput = speechOutput;
                 speechOutput = speechOutput + "Please say yes if you would like to hear more details.";
                 repromptText = "There are currently active tropical storms. To hear specific details about them, just say yes.";
             }
@@ -304,7 +306,7 @@ function getWelcomeResponse(session, callback) {
         VoiceInsights.track('WelcomeMessage', null, speechOutput, (err, res) => {
 	        console.log('voice insights logged' + JSON.stringify(res));
 	        callback(sessionAttributes,
-                buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, shouldEndSession));
+                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, shouldEndSession));
         });
     });
 }
@@ -1059,7 +1061,7 @@ function getStormFact(intent, session, callback) {
     var stormFacts = [
         'The threshold for a tropical storm is sustained winds at 39 miles per hour. Tropical storms below this level are considered a tropical depression.',
         'The threshold for a hurricane is sustained winds at 74 miles per hour.',
-        'The Saffir–Simpson scale categories hurricanes into five levels. The classifications can provide some indication of the potential damage and flooding a hurricane will cause upon landfall.',
+        'The Saffirâ€“Simpson scale categories hurricanes into five levels. The classifications can provide some indication of the potential damage and flooding a hurricane will cause upon landfall.',
         'In the Northern hemisphere, the tropical storm season begins on June 1st. Storms may begin before this date, however they are quite rare.',
         'Category one hurricanes are defined as having sustained winds ranging from 74 to 95 miles per hour. Storms of this intensity usually cause no significant structural damage to most well-constructed permanent structures. They can topple unanchored mobile homes, as well as uproot or snap weak trees.',
         'Category two hurricanes are defined as having sustained winds ranging from 96 to 110 miles per hour. Storms of this intensity often damage roofing material and inflict damage upon poorly constructed doors and windows.',
@@ -1071,7 +1073,7 @@ function getStormFact(intent, session, callback) {
         'Hurricane Felix was the southernmost landfalling Category 5 hurricane in the Atlantic. It is also the most recent Atlantic hurricane to make landfall as a Category 5. Hurricane Felix made landfall in 2007, with initial impacts to Honduras and Nicaragua. At least 133 people were reported dead. At least 130 of them were in Nicaragua.',
         'Hurricane Katrina was the costliest natural disaster and one of the five deadliest hurricanes in the history of the United States. Overall, at least 1,245 people died in the hurricane and subsequent floods, making it the deadliest United States hurricane since the 1928 Okeechobee hurricane. Total property damage was estimated at $108 billion in 2005 US Dollars. ',
         'Hurricane Rita was the fourth-most intense Atlantic hurricane ever recorded and the most intense tropical cyclone ever observed in the Gulf of Mexico. Southeast Texas where Rita made landfall suffered from catastrophic-to-severe flooding and wind damage.',
-        'Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin, and was the most intense tropical cyclone recorded in the western hemisphere until Hurricane Patricia in 2015. Wilma made several landfalls, with the most destructive effects felt in the Yucatán Peninsula of Mexico, Cuba, and the US state of Florida.',
+        'Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin, and was the most intense tropical cyclone recorded in the western hemisphere until Hurricane Patricia in 2015. Wilma made several landfalls, with the most destructive effects felt in the YucatÃ¡n Peninsula of Mexico, Cuba, and the US state of Florida.',
         'The 2005 Atlantic hurricane season was the most active Atlantic hurricane season in recorded history, shattering numerous records. The impact of the season was widespread and ruinous with an estimated 3,913 deaths and record damage of about $159.2 billion.',
         'Hurricane Hugo was a powerful Cape Verde-type hurricane that caused widespread damage and loss of life in the Leeward Islands, Puerto Rico, and the Southeast United States. It formed over the eastern Atlantic near the Cape Verde Islands on September 9, 1989. Hurricane Hugo caused 34 fatalities (most by electrocution or drowning) in the Caribbean and 27 in South Carolina, left nearly 100,000 homeless, and resulted in $10 billion in damage overall, making it the most damaging hurricane ever recorded at the time.',
         'Hurricane Andrew was a Category 5 Atlantic hurricane that struck South Florida in August 1992, and was the most destructive hurricane in Floridas history. The storm was also ranked as the costliest hurricane in United States history until being surpassed by Katrina in 2005. Andrew caused major damage in the Bahamas and Louisiana as well, but the greatest impact was in South Florida, where it produced devastating winds with speeds as high as 165 mph.',
@@ -1100,6 +1102,7 @@ function getStormFact(intent, session, callback) {
 // --------------- Helpers that build all of the responses -----------------------
 
 function buildSpeechletResponse(title, output, cardInfo, repromptText, shouldEndSession) {
+    console.log("build speechlet response");
     return {
         outputSpeech: {
             type: "PlainText",
@@ -1116,11 +1119,36 @@ function buildSpeechletResponse(title, output, cardInfo, repromptText, shouldEnd
                 text: repromptText
             }
         },
+        directives: [
+            {
+            type: "Display.RenderTemplate",
+            template: {
+                type: "BodyTemplate1",
+                token: "T123",
+                backButton: "HIDDEN",
+                backgroundImage: {
+                    contentDescription: "StormPhoto",
+                    sources: [
+                        {
+                            url: "https://s3.amazonaws.com/hurricane-data/hurricaneBackground.png"
+                        }
+                    ]
+                },
+                title: "Hurricane Center",
+                textContent: {
+                    primaryText: {
+                        text: cardInfo,
+                        type: "PlainText"
+                    }
+                }
+            }
+        }],
         shouldEndSession: shouldEndSession
     };
 }
 
 function buildAudioResponse(title, output, cardInfo, repromptText, shouldEndSession) {
+    console.log("build audio response");
     return {
         outputSpeech: {
             type: "SSML",
@@ -1148,4 +1176,3 @@ function buildResponse(sessionAttributes, speechletResponse) {
         response: speechletResponse
     };
 }
-
