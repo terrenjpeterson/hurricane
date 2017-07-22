@@ -472,10 +472,14 @@ function getCurrentYearHistory(intent, session, device, callback) {
             {"stormName":"Arlene", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Bret", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Cindy", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Don", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
             {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
             {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Dora", "ocean":"Pacific", "level":"Tropical Storm"}
+            {"stormName":"Dora", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Eugene", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Fernanda", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Greg", "ocean":"Pacific", "level":"Tropical Storm"}
         ];
 
     var atlanticTropStorms = 0;
@@ -503,8 +507,8 @@ function getCurrentYearHistory(intent, session, device, callback) {
 
     // format response by merging the summary from the array with natural language
 
-    var speechOutput = "It is early in the season, and Hurricane Dora in the Pacific has been " +
-        "the only storm to reach hurricane status. ";
+    var speechOutput = "It is early in the season, and Hurricanes Dora, Eugene, and Fernanda in the Pacific have been " +
+        "the only storms to reach hurricane status. ";
 //    var speechOutput = "So far this year there have been " + atlanticHurricanes +
 //        " hurricanes in the Atlantic and " + pacificHurricanes +
 //    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
@@ -787,6 +791,7 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
     var sessionAttributes = {};
     var cardOutput = "";
     var cardTitle = "Storm Information for 2017";
+    var activeStorms = [];
     
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -799,6 +804,7 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
                 
     // go through the returned array and build language and cards depicting the storm data.
     for (i = 0; i < storms.length; i++) {
+        var activeStormDetail = {};
         if (storms[i].formed) {
                         
             // this is the introduction message with the high level information on the storm
@@ -885,6 +891,17 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
                 cardOutput = cardOutput + "Surf : " + storms[i].hazards.surf + "\n";
                             
             cardOutput = cardOutput + "Next Update : " + returnData[0].nextUpdate;
+            
+            // this detail is used for building response specific to an Echo Show
+            activeStormDetail.stormType    = storms[i].stormType;
+            activeStormDetail.stormName    = storms[i].stormName;
+            activeStormDetail.ocean        = storms[i].ocean;
+            activeStormDetail.locationLat  = storms[i].location.lat;
+            activeStormDetail.locationLong = storms[i].location.long;
+            activeStormDetail.peakWinds    = storms[i].peakWinds;
+            activeStormDetail.pressure     = storms[i].pressure;
+            
+            activeStorms.push(activeStormDetail);
         }
     }
 
@@ -895,11 +912,17 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
     var repromptText = "Would you like to learn more about storms? If so, please say give me a storm fact.";
     var shouldEndSession = false;
 
-    VoiceInsights.track('GetActiveStorm', null, speechOutput, (err, res) => {
-        console.log('voice insights logged' + JSON.stringify(res));
+    if (device.type === "Legacy") {
+        VoiceInsights.track('GetActiveStorm', null, speechOutput, (err, res) => {
+            console.log('voice insights logged' + JSON.stringify(res));
+            callback(sessionAttributes,
+                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
+        });
+    } else {
+        console.log("Active Storms: " + JSON.stringify(activeStorms));
         callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-    });
+            buildVisualListResponse(cardTitle, speechOutput, cardOutput, repromptText, activeStorms, shouldEndSession));
+    }
 }
 
 // this function prepares the response when the user requests a full list of storm names
@@ -1198,6 +1221,89 @@ function buildSpeechletResponse(title, output, cardInfo, repromptText, device, s
             shouldEndSession: shouldEndSession
         };        
     }
+}
+
+function buildVisualListResponse(title, output, cardInfo, repromptText, activeStorms, shouldEndSession) {
+    var stormList = [];
+
+    // first build the list array based on the active storms
+    for (i = 0; i < activeStorms.length; i++) {
+        var stormDetail = {};
+            stormDetail.token = "item_" + i;
+
+        var stormImageLocation = {};
+        
+        // set image based on storm type
+        if (activeStorms[i].stormType === "Tropical Storm") {
+            stormImageLocation.url = "https://s3.amazonaws.com/hurricane-data/images/tropicalStorm.png";
+        } else if (activeStorms[i].stormType === "Hurricane") {
+            stormImageLocation.url = "https://s3.amazonaws.com/hurricane-data/images/hurricane.png";
+        } else {
+            stormImageLocation.url = "https://s3.amazonaws.com/hurricane-data/images/tropicalDepression.png";
+        }
+        var stormImage = [];
+            stormImage.push(stormImageLocation);    
+        var stormImageSources = {};
+            stormImageSources.sources = stormImage;
+            stormImageSources.contentDescription = "Storm Description";
+
+            stormDetail.image = stormImageSources;
+
+        var stormTextContent = {};
+            stormPrimaryText = {};
+            stormPrimaryText.type = "RichText";
+            stormPrimaryText.text = "<font size='3'>" + activeStorms[i].stormType + "<br/>" +
+                activeStorms[i].stormName + "</font>";
+            stormSecondaryText = {};
+            stormSecondaryText.type = "RichText";
+            stormSecondaryText.text = "Peak Winds - " + activeStorms[i].peakWinds + " mph";
+
+            stormTextContent.primaryText   = stormPrimaryText;
+            stormTextContent.secondaryText = stormSecondaryText;
+
+            stormDetail.textContent = stormTextContent;
+        
+            stormList.push(stormDetail);
+    }
+
+    // now return the object formated in the proper way and include the storm list
+    return {
+        outputSpeech: {
+            type: "PlainText",
+            text: output
+        },
+        card: {
+            type: "Simple",
+            title: title,
+            content: cardInfo
+        },
+        reprompt: {
+            outputSpeech: {
+                type: "PlainText",
+                text: repromptText
+            }
+        },
+        directives: [
+            {
+            type: "Display.RenderTemplate",
+            template: {
+                type: "ListTemplate2",
+                token: "T123",
+                backButton: "HIDDEN",
+                backgroundImage: {
+                    contentDescription: "StormPhoto",
+                    sources: [
+                        {
+                            url: "https://s3.amazonaws.com/hurricane-data/hurricaneBackground.png"
+                        }
+                    ]
+                },
+                title: "Hurricane Center",
+                listItems : stormList
+            }
+        }],
+        shouldEndSession: shouldEndSession
+    };        
 }
 
 function buildAudioResponse(title, output, cardInfo, repromptText, shouldEndSession) {
