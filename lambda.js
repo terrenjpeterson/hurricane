@@ -95,7 +95,8 @@ var stormDetailAvail = [
             {"stormName":"Paul", "ocean":"Pacific", "stormYear":2012},
             {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011},
             {"stormName":"Andrew", "ocean":"Atlantic", "stormYear":1992},
-            {"stormName":"Matthew", "ocean":"Atlantic", "stormYear":2016}, 
+            {"stormName":"Matthew", "ocean":"Atlantic", "stormYear":2016},
+            {"stormName":"Harvey", "ocean":"Atlantic", "stormYear":2017}
 ];
 
 // location of the storm dataset
@@ -230,7 +231,7 @@ function onIntent(intentRequest, session, context, callback) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
         getHelpResponse(device, callback);
-    } else if ("AMAZON.RepeatIntent" === intentName) {
+    } else if ("AMAZON.RepeatIntent" === intentName || "AMAZON.NextIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
         handleSessionEndRequest(device, callback);
@@ -293,12 +294,14 @@ function getWelcomeResponse(session, device, callback) {
                 var activeStormPacific = false;
                 var activeStorms = 0;
                 var activeStormNames = [];
+                var currentStormLocation = "";
                 // rotate through the array of current storm data to determine where the active storms are
                 for (i = 0; i < storms.length; i++) {
                     console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
                     if (storms[i].formed) {
                         activeStormNames.push(returnData[0].storms[i].stormType + " " + returnData[0].storms[i].stormName);
                         activeStorms++;
+                        currentStormLocation = returnData[0].storms[i].location.proximity;
                         if (storms[i].ocean == "Atlantic")
                             activeStormAtlantic = true;
                         else
@@ -311,7 +314,8 @@ function getWelcomeResponse(session, device, callback) {
                 // build a different message depending on where the oceans are at and how many are active
                 if (activeStormAtlantic === true && activeStormPacific === false) {
                     if (activeStorms === 1) {
-                        speechOutput = speechOutput + activeStormNames[0] + " is currently active in the Atlantic Ocean. ";
+                        console.log("Current Location: " + currentStormLocation);
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLocation;
                     } else if (activeStorms === 2) {
                         speechOutput = speechOutput + activeStormNames[0] + " and " + activeStormNames[1] + " are currently " +
                             "active in the Atlantic Ocean. ";
@@ -473,13 +477,22 @@ function getCurrentYearHistory(intent, session, device, callback) {
             {"stormName":"Bret", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Cindy", "ocean":"Atlantic", "level":"Tropical Storm"}, 
             {"stormName":"Don", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Emily", "ocean":"Atlantic", "level":"Tropical Storm"}, 
+            {"stormName":"Franklin", "ocean":"Atlantic", "level":"Hurricane"}, 
+            {"stormName":"Gert", "ocean":"Atlantic", "level":"Hurricane"}, 
+            {"stormName":"Harvey", "ocean":"Atlantic", "level":"Hurricane"}, 
+            {"stormName":"Irma", "ocean":"Atlantic", "level":"Hurricane"}, 
             {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
             {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
             {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"},
             {"stormName":"Dora", "ocean":"Pacific", "level":"Hurricane"},
             {"stormName":"Eugene", "ocean":"Pacific", "level":"Hurricane"},
             {"stormName":"Fernanda", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Greg", "ocean":"Pacific", "level":"Tropical Storm"}
+            {"stormName":"Greg", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Hilary", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Irwin", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Kenneth", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Lidia", "ocean":"Atlantic", "level":"Tropical Storm"}
         ];
 
     var atlanticTropStorms = 0;
@@ -507,16 +520,14 @@ function getCurrentYearHistory(intent, session, device, callback) {
 
     // format response by merging the summary from the array with natural language
 
-    var speechOutput = "It is early in the season, and Hurricanes Dora, Eugene, and Fernanda in the Pacific have been " +
-        "the only storms to reach hurricane status. ";
-//    var speechOutput = "So far this year there have been " + atlanticHurricanes +
-//        " hurricanes in the Atlantic and " + pacificHurricanes +
+    var speechOutput = "So far this year there have been " + atlanticHurricanes +
+        " hurricanes in the Atlantic and " + pacificHurricanes + " in the Pacific. ";
 //    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
 //        "in either the Atlantic or Pacific Oceans. " +
         speechOutput = speechOutput + "There have been " + atlanticTropStorms +
         " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
-//        " I have detailed information about Hurricane Matthew. If you would like details " +
-//        " please say, Details on Hurricane Matthew. " +
+        " I have detailed information about Hurricane Matthew. If you would like details " +
+        " please say, Tell me about Hurricane Harvey. " +
         " If you would like to hear about current active storms please say " +
         " Current Storms and I will give a detailed overview of what is currently active. ";
         
@@ -832,7 +843,7 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
 
             if (storms[i].hurricaneWatch === true)
                 speechOutput = speechOutput + "From the National Hurricane Center in Miami, Florida. " +
-                    "A Hurricane Watch has been issued for " + storms[i].tropStormLocation + ". " +
+                    "A Hurricane Watch has been issued for " + storms[i].hurrWatchLocation + ". " +
                     "A Hurricane Watch means that hurricane conditions are possible " +
                     "within the watch area. A Hurricane Watch is typically issued 48 " +
                     "hours before the anticipated first occurrence of tropical storm " +
@@ -1137,7 +1148,9 @@ function getStormFact(intent, session, device, callback) {
         'The 1938 New England Hurricane (also referred to as the Great New England Hurricane and Long Island Express) was one of the deadliest and most destructive tropical cyclones to strike New England.  It is estimated that the hurricane killed 682 people, damaged or destroyed more than 57,000 homes. Damaged trees and buildings were still seen in the affected areas as late as 1951.',
         'Hurricane Mitch was the second deadliest Atlantic hurricane on record, after the Great Hurricane of 1780. Nearly 11,000 people were killed with over 11,000 left missing by the end of 1998. Additionally, roughly 2.7 million were left homeless as a result of the hurricane. Hurricane Mitch dropped historic amounts of rainfall in Honduras, Guatemala, and Nicaragua, with unofficial reports of up to 75 inches.',
         'Hurricane Carol in 1953 was the strongest storm of the Atlantic hurricane season that year, and the first Category 5 hurricane in the Atlantic basin since the 1938 New England hurricane. Carol is also the first named storm to attain Category 5 status. Carol developed on August 28 off the west coast of Africa, although the Weather Bureau did not initiate advisories until five days later.',
-        'In 1992, Hurricane Iniki was the most powerful hurricane to strike the U.S. state of Hawaii in recorded history. Iniki struck the island of Kauai on September 11 at peak intensity. It had winds of 145 miles per hour. Damage was greatest on Kauai, where the hurricane destroyed more than 1,400 houses and severely damaged more than 5,000.'
+        'In 1992, Hurricane Iniki was the most powerful hurricane to strike the U.S. state of Hawaii in recorded history. Iniki struck the island of Kauai on September 11 at peak intensity. It had winds of 145 miles per hour. Damage was greatest on Kauai, where the hurricane destroyed more than 1,400 houses and severely damaged more than 5,000.',
+        'Hurricane Harvey was a Category 4 hurricane that struck Texas in August 2017. With peak accumulations of 51.88 inches, Harvey is the wettest tropical cyclone on record in the contiguous United States.',
+        'During Hurricane Harvey, the local National Weather Service office in Houston observed all-time record daily rainfall accumulations on both August 26 and 27, measured at 14.4 inches and 16.08 inches respectively.'
     ];
     
     const factIndex = Math.floor(Math.random() * stormFacts.length);
