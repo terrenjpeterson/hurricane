@@ -73,6 +73,7 @@ var pacificStorms = [
 ];
 
 // storm names that historical information is available for in the datasets
+// [ToDo: Add hurricane Omar, Paloma, Hanna]
 
 var stormDetailAvail = [
             {"stormName":"Danny", "ocean":"Atlantic", "stormYear":2015}, 
@@ -85,7 +86,9 @@ var stormDetailAvail = [
             {"stormName":"Alex", "ocean":"Atlantic", "stormYear":2010},
             {"stormName":"Karl", "ocean":"Atlantic", "stormYear":2010},
             {"stormName":"Dean", "ocean":"Atlantic", "stormYear":2007},
+            {"stormName":"Felix", "ocean":"Atlantic", "stormYear":2007},
             {"stormName":"Ernesto", "ocean":"Atlantic", "stormYear":2006},
+            {"stormName":"Charley", "ocean":"Atlantic", "stormYear":2004},
             {"stormName":"Rita", "ocean":"Atlantic", "stormYear":2005},
             {"stormName":"Wilma", "ocean":"Atlantic", "stormYear":2005},
             {"stormName":"Linda", "ocean":"Pacific", "stormYear":2015},
@@ -95,8 +98,13 @@ var stormDetailAvail = [
             {"stormName":"Paul", "ocean":"Pacific", "stormYear":2012},
             {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011},
             {"stormName":"Andrew", "ocean":"Atlantic", "stormYear":1992},
+            {"stormName":"Hugo", "ocean":"Atlantic", "stormYear":1989},
+            {"stormName":"Earl", "ocean":"Atlantic", "stormYear":2016},
             {"stormName":"Matthew", "ocean":"Atlantic", "stormYear":2016},
-            {"stormName":"Harvey", "ocean":"Atlantic", "stormYear":2017}
+            {"stormName":"Otto", "ocean":"Atlantic", "stormYear":2016},            
+            {"stormName":"Harvey", "ocean":"Atlantic", "stormYear":2017},
+            {"stormName":"Irma", "ocean":"Atlantic", "stormYear":2017},
+            {"stormName":"Maria", "ocean":"Atlantic", "stormYear":2017}
 ];
 
 // location of the storm dataset
@@ -225,9 +233,9 @@ function onIntent(intentRequest, session, context, callback) {
         getCompleteList(intent, session, device, callback);
     } else if ("GetStormDetail" === intentName) {
         getStormDetail(intent, session, device, callback);
-    } else if ("GiveStormFact" === intentName) {
+    } else if ("GiveStormFact" === intentName || "AMAZON.MoreIntent" === intentName) {
         getStormFact(intent, session, device, callback);        
-    } else if ("AMAZON.StartOverIntent" === intentName) {
+    } else if ("AMAZON.StartOverIntent" === intentName || "AMAZON.PreviousIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
         getHelpResponse(device, callback);
@@ -295,6 +303,7 @@ function getWelcomeResponse(session, device, callback) {
                 var activeStorms = 0;
                 var activeStormNames = [];
                 var currentStormLocation = "";
+                var currentStormLoc = [];
                 // rotate through the array of current storm data to determine where the active storms are
                 for (i = 0; i < storms.length; i++) {
                     console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
@@ -302,6 +311,7 @@ function getWelcomeResponse(session, device, callback) {
                         activeStormNames.push(returnData[0].storms[i].stormType + " " + returnData[0].storms[i].stormName);
                         activeStorms++;
                         currentStormLocation = returnData[0].storms[i].location.proximity;
+                        currentStormLoc.push(returnData[0].storms[i].location.proximity);
                         if (storms[i].ocean == "Atlantic")
                             activeStormAtlantic = true;
                         else
@@ -314,11 +324,15 @@ function getWelcomeResponse(session, device, callback) {
                 // build a different message depending on where the oceans are at and how many are active
                 if (activeStormAtlantic === true && activeStormPacific === false) {
                     if (activeStorms === 1) {
-                        console.log("Current Location: " + currentStormLocation);
-                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLocation;
+                        console.log("Current Location: " + currentStormLoc[0]);
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0];
                     } else if (activeStorms === 2) {
-                        speechOutput = speechOutput + activeStormNames[0] + " and " + activeStormNames[1] + " are currently " +
-                            "active in the Atlantic Ocean. ";
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + " " +
+                            activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + " ";
+                    } else if (activeStorms === 3) {
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] +
+                            activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + ". " +
+                            activeStormNames[2] + " is currently active, approximately " + currentStormLoc[2]; 
                     } else {
                         speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Atlantic Ocean. ";
                     }
@@ -331,11 +345,21 @@ function getWelcomeResponse(session, device, callback) {
                     } else {
                         speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Pacific Ocean. ";
                     }
-                } else if (activeStormAtlantic === true && activeStormPacific === true)
-                    speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
+                } else if (activeStormAtlantic === true && activeStormPacific === true) {
+                    if (activeStorms === 2) {
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + ". " +
+                            activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + ".";
+                    } else if (activeStorms === 3) {
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + ". " +
+                            activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + ". " +
+                            activeStormNames[2] + " is currently active, approximately " + currentStormLoc[2]; 
+                    } else {
+                        speechOutput = speechOutput + "There are active storms in both the Atlantic and Pacific Oceans. ";
+                    }
+                }
                 //speechOutput = speechOutput + "<break time=\"1s\"/>";
                 cardOutput = speechOutput;
-                speechOutput = speechOutput + "Please say yes if you would like to hear more details.";
+                speechOutput = speechOutput + "Please say yes if you would like to hear additional details including the forecast.";
                 repromptText = "There are currently active tropical storms. To hear specific details about them, just say yes.";
             }
         }
@@ -376,7 +400,9 @@ function getHelpResponse(device, callback) {
 // this is the function that gets called to format the response when the user is done
 function handleSessionEndRequest(device, callback) {
     var cardTitle = "Thanks for using Hurricane Center";
-    var speechOutput = "Thank you for checking in with the Hurricane Center. Have a nice day!";
+    var speechOutput = "Thank you for using Hurricane Center. ";
+        //"If this skill was useful, please " +
+        //"let others know by writing a review in the Alexa app.";
     // Setting this to true ends the session and exits the skill.
     var shouldEndSession = true;
 
@@ -482,6 +508,10 @@ function getCurrentYearHistory(intent, session, device, callback) {
             {"stormName":"Gert", "ocean":"Atlantic", "level":"Hurricane"}, 
             {"stormName":"Harvey", "ocean":"Atlantic", "level":"Hurricane"}, 
             {"stormName":"Irma", "ocean":"Atlantic", "level":"Hurricane"}, 
+            {"stormName":"Jose", "ocean":"Atlantic", "level":"Hurricane"}, 
+            {"stormName":"Katia", "ocean":"Atlantic", "level":"Hurricane"},
+            {"stormName":"Lee", "ocean":"Atlantic", "level":"Hurricane"},
+            {"stormName":"Maria", "ocean":"Atlantic", "level":"Hurricane"},
             {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
             {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
             {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"},
@@ -526,10 +556,10 @@ function getCurrentYearHistory(intent, session, device, callback) {
 //        "in either the Atlantic or Pacific Oceans. " +
         speechOutput = speechOutput + "There have been " + atlanticTropStorms +
         " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
-        " I have detailed information about Hurricane Matthew. If you would like details " +
-        " please say, Tell me about Hurricane Harvey. " +
-        " If you would like to hear about current active storms please say " +
-        " Current Storms and I will give a detailed overview of what is currently active. ";
+        " I have detailed information about Hurricanes Harvey, Irma, and Maria. If you would like details " +
+        " please say something like, Tell me about Hurricane Harvey. ";
+        //" If you would like to hear about current active storms please say " +
+        //" Current Storms and I will give a detailed overview of what is currently active. ";
         
     var cardOutput = "Atlantic Ocean\n" + atlanticHurricanes +
         " Hurricanes\n" + atlanticTropStorms +
@@ -918,7 +948,8 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
 
     // after all the storms are processed, add on a closing section
     speechOutput = speechOutput + " Please check back later as we track this potentially dangerous event. " +
-        "If you would like to hear storm information from prior years, say something like Storm History for 2011.";
+    //    "If you would like to hear storm information from prior years, say something like Storm History for 2011.";
+        "If you would like to learn more about storms, please say something like Tell me a Storm Fact.";
                 
     var repromptText = "Would you like to learn more about storms? If so, please say give me a storm fact.";
     var shouldEndSession = false;
@@ -1100,11 +1131,16 @@ function getStormDetail(intent, session, device, callback) {
             console.log("No storm name provided - redirect with a response message.")
             var speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
                 "say current storms. ";
+        // new logic added on Sept 19th - trying to catch condition where people are looking for current storms.
+        } else if (stormName === "xxx") {
+            console.log("New storm condition");
+            var speechOutput = stormName + " is a current active storm. For specifics on it's latest status, " +
+                "please say, Current Storm Details.";
         } else {
             console.log("Storm name " + stormName + " did not exist in records. Respond back with message as such.")
             var speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
                 "Please provide a different storm name that you would like information on. For example, " +
-                "say Tell me about Hurricane Katrina.";
+                "say, Tell me about Hurricane Katrina.";
         }
     
         cardOutput = speechOutput;
@@ -1127,7 +1163,7 @@ function getStormFact(intent, session, device, callback) {
     var stormFacts = [
         'The threshold for a tropical storm is sustained winds at 39 miles per hour. Tropical storms below this level are considered a tropical depression.',
         'The threshold for a hurricane is sustained winds at 74 miles per hour.',
-        'The Saffirâ€“Simpson scale categories hurricanes into five levels. The classifications can provide some indication of the potential damage and flooding a hurricane will cause upon landfall.',
+        'The Saffir Simpson scale categories hurricanes into five levels. The classifications can provide some indication of the potential damage and flooding a hurricane will cause upon landfall.',
         'In the Northern hemisphere, the tropical storm season begins on June 1st. Storms may begin before this date, however they are quite rare.',
         'Category one hurricanes are defined as having sustained winds ranging from 74 to 95 miles per hour. Storms of this intensity usually cause no significant structural damage to most well-constructed permanent structures. They can topple unanchored mobile homes, as well as uproot or snap weak trees.',
         'Category two hurricanes are defined as having sustained winds ranging from 96 to 110 miles per hour. Storms of this intensity often damage roofing material and inflict damage upon poorly constructed doors and windows.',
@@ -1136,12 +1172,12 @@ function getStormFact(intent, session, device, callback) {
         'Category five hurricanes are the strongest recorded, and are defined as having sustained winds above 157 miles per hour. At this level, they can cause catastophic damage if making landfall, both to structures and trees. Widespread power outages are common, and rebuilding efforts can take years.',
         'No Category five hurricane is known to have made landfall as such in the eastern Pacific basin.',
         'Hurricane Patricia was the most intense hurricane on record in the Western Hemisphere. On October 23rd, 2015, the maximum sustained winds were recorded at 215 mph for a one minute interval, and it recorded a pressure reading of 872 millibars. The storm lessened before hitting the Pacific coast of Mexico near Cuixmala, Jalisco, with winds of 150 mph. This made it the strongest landfalling hurricane on record along the Pacific coast of Mexico.',
-        'Hurricane Felix was the southernmost landfalling Category 5 hurricane in the Atlantic. It is also the most recent Atlantic hurricane to make landfall as a Category 5. Hurricane Felix made landfall in 2007, with initial impacts to Honduras and Nicaragua. At least 133 people were reported dead. At least 130 of them were in Nicaragua.',
+        'Hurricane Felix was the southernmost landfalling Category 5 hurricane in the Atlantic. It is also the most recent Atlantic hurricane to make landfall as a Category 5 until Hurricane Irma in 2017. Hurricane Felix made landfall in 2007, with initial impacts to Honduras and Nicaragua. At least 133 people were reported dead. At least 130 of them were in Nicaragua.',
         'Hurricane Katrina was the costliest natural disaster and one of the five deadliest hurricanes in the history of the United States. Overall, at least 1,245 people died in the hurricane and subsequent floods, making it the deadliest United States hurricane since the 1928 Okeechobee hurricane. Total property damage was estimated at $108 billion in 2005 US Dollars. ',
         'Hurricane Rita was the fourth-most intense Atlantic hurricane ever recorded and the most intense tropical cyclone ever observed in the Gulf of Mexico. Southeast Texas where Rita made landfall suffered from catastrophic-to-severe flooding and wind damage.',
-        'Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin, and was the most intense tropical cyclone recorded in the western hemisphere until Hurricane Patricia in 2015. Wilma made several landfalls, with the most destructive effects felt in the YucatÃ¡n Peninsula of Mexico, Cuba, and the US state of Florida.',
+        'Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin, and was the most intense tropical cyclone recorded in the western hemisphere until Hurricane Patricia in 2015. Wilma made several landfalls, with the most destructive effects felt in the Yucatan Peninsula of Mexico, Cuba, and the US state of Florida.',
         'The 2005 Atlantic hurricane season was the most active Atlantic hurricane season in recorded history, shattering numerous records. The impact of the season was widespread and ruinous with an estimated 3,913 deaths and record damage of about $159.2 billion.',
-        'Hurricane Hugo was a powerful Cape Verde-type hurricane that caused widespread damage and loss of life in the Leeward Islands, Puerto Rico, and the Southeast United States. It formed over the eastern Atlantic near the Cape Verde Islands on September 9, 1989. Hurricane Hugo caused 34 fatalities (most by electrocution or drowning) in the Caribbean and 27 in South Carolina, left nearly 100,000 homeless, and resulted in $10 billion in damage overall, making it the most damaging hurricane ever recorded at the time.',
+        'Hurricane Hugo was a powerful Cape Verde-type hurricane that caused widespread damage and loss of life in the Leeward Islands, Puerto Rico, and the Southeast United States. It formed over the eastern Atlantic near the Cape Verde Islands on September 9, 1989. Hurricane Hugo caused 34 fatalities, most by electrocution or drowning, in the Caribbean and 27 in South Carolina, left nearly 100,000 homeless, and resulted in $10 billion in damage overall, making it the most damaging hurricane ever recorded at the time.',
         'Hurricane Andrew was a Category 5 Atlantic hurricane that struck South Florida in August 1992, and was the most destructive hurricane in Floridas history. The storm was also ranked as the costliest hurricane in United States history until being surpassed by Katrina in 2005. Andrew caused major damage in the Bahamas and Louisiana as well, but the greatest impact was in South Florida, where it produced devastating winds with speeds as high as 165 mph.',
         'Forming in 1969, Hurricane Camille was the second strongest U.S. landfalling hurricane in recorded history in terms of atmospheric pressure, behind the Labor Day Hurricane in 1935. The hurricane flattened nearly everything along the coast of the U.S. state of Mississippi, and caused additional flooding and deaths inland while crossing the Appalachian Mountains of Virginia.',
         'The 1935 Labor Day Hurricane was the most intense hurricane to make landfall in the United States on record, as well as the 3rd most intense Atlantic hurricane ever. The compact and intense hurricane caused extreme damage in the upper Florida Keys, as a storm surge of approximately 18 to 20 feet swept over the low-lying islands. The hurricane also caused additional damage in northwest Florida, Georgia, and the Carolinas.',
@@ -1150,7 +1186,18 @@ function getStormFact(intent, session, device, callback) {
         'Hurricane Carol in 1953 was the strongest storm of the Atlantic hurricane season that year, and the first Category 5 hurricane in the Atlantic basin since the 1938 New England hurricane. Carol is also the first named storm to attain Category 5 status. Carol developed on August 28 off the west coast of Africa, although the Weather Bureau did not initiate advisories until five days later.',
         'In 1992, Hurricane Iniki was the most powerful hurricane to strike the U.S. state of Hawaii in recorded history. Iniki struck the island of Kauai on September 11 at peak intensity. It had winds of 145 miles per hour. Damage was greatest on Kauai, where the hurricane destroyed more than 1,400 houses and severely damaged more than 5,000.',
         'Hurricane Harvey was a Category 4 hurricane that struck Texas in August 2017. With peak accumulations of 51.88 inches, Harvey is the wettest tropical cyclone on record in the contiguous United States.',
-        'During Hurricane Harvey, the local National Weather Service office in Houston observed all-time record daily rainfall accumulations on both August 26 and 27, measured at 14.4 inches and 16.08 inches respectively.'
+        'During Hurricane Harvey, the local National Weather Service office in Houston observed all-time record daily rainfall accumulations on both August 26 and 27, measured at 14.4 inches and 16.08 inches respectively.',
+        'In 2016, Otto was the first Atlantic hurricane on record to have its eye cross over Costa Rica, and the first hurricane force system to traverse the nation.',
+        'An Atlantic Pacific crossover hurricane is a tropical cyclone that develops in the Atlantic Ocean and moves into the Pacific Ocean, or vice versa. Since reliable records began in 1851, a total of seventeen tropical cyclones have done this.',
+        'Prior to 2000, storms were re-named after crossing from the Gulf of Mexico into the Eastern Pacific. At the 22nd hurricane committee in 2000 it was decided that tropical cyclones that moved from the Atlantic to the Eastern Pacific basin and vice versa would no longer be renamed. Hurricane Otto in 2016 was the first storm to cross from one basin to another to apply under this rule.',
+        'In 2017, Hurricane Franklin was the first hurricane to make landfall in the Mexican state of Veracruz since Hurricane Karl in 2010.',
+        'In 2017, Hurricane Irma was an extremely powerful and catastrophic Cape Verde type hurricane, the strongest observed in the Atlantic since Wilma in 2005 in terms of maximum sustained winds.',
+        'In 2017, Hurricane Irma became the first major hurricane to make landfall in Florida since Wilma in 2005.',
+        'In 2017, Hurricane Irma was also the most intense Atlantic hurricane to strike the United States since Katrina in 2005.',
+        'In 2017, Hurricane Maria was the tenth most intense Atlantic hurricane on record, the worst natural disaster in Dominica in its recorded history.',
+        'In 2017, Hurricane Maria became the strongest tropical storm to hit Puerto Rico since 1928.',
+        'In 2017, Hurricane Maria completely destroyed the island of Puerto Ricos power grid, leaving all 3.4 million residents without electricity.',
+        'In 2017, Hurricane Marias outer eyewall was reported by the National Hurricane Center to have crossed Saint Croy while the hurricane was at Category 5 intensity.'
     ];
     
     const factIndex = Math.floor(Math.random() * stormFacts.length);
