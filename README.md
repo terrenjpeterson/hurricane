@@ -9,6 +9,8 @@ This is an Alexa skill that provides updates on hurricanes based on data from th
 - [What does the NLU model look like including custom slots?](#overview-NLU-models)
 - [How is the SDK structured?](#structure-of-SDK)
 - [What are the different intents in the skill?](#intents-in-skill)
+- [Where does the storm data come from?](#storm-data-from-NHC)
+- [How does the skill support the Echo Show?](#visual-rendering-for-echo-show)
 
 ## Overview NLU Models
 
@@ -48,3 +50,20 @@ There are also a set of helper functions within the framework that package the j
 
 - buildSpeechletResponse (title, output, repromptText, shouldEndSession)
 - buildResponse (sessionAttributes, speechletResponse)
+
+## Storm Data from NHC
+
+The hurricane data comes from the National Hurricane Center. 
+It is loaded from a lambda function into an S3 bucket that is accessible by the skill.
+This means that it can be dynamically changed without any impact to the skill.
+The NHC provides basic formatting native to a website, however when this data is aggregigated, it is converted into json format.
+This means that the Lambda function can easily read attributes.
+
+## Visual Rendering for Echo Show
+
+This skill was originally written in early 2016, using a prior version of the NodeJS SDK.
+When the Echo Show was released, this skill was updated with this prior version to work with the Alex Show.
+For an example of how to use the Echo Show in the current SDK, use [this repo](https://github.com/terrenjpeterson/pianoplayer)
+To determine if the device has a screen, it looks for the context.System.device.supportedInterfaces.Display attribute in the main handler of the function, then passes the attribute to functions processed in the intent.
+The helper that renders the Speechlet response was modified to look for this attribute, then formats the JSON response to include the hurricane background using the BodyTemplate1 format.
+
