@@ -4,10 +4,8 @@
 
 var aws = require('aws-sdk');
 
-// this is used by the VoiceLabs analytics
+// this is used to track the application
 var APP_ID = 'amzn1.echo-sdk-ams.app.709af9ef-d5eb-48dd-a90a-0dc48dc822d6';
-var VoiceInsights =require('voice-insights-sdk'),
-  VI_APP_TOKEN = '17373460-06c4-11a7-2596-0eb19d13e26e';
 
 // Get this years storm names
 
@@ -276,9 +274,6 @@ function getWelcomeResponse(session, device, callback) {
 
     console.log("Get Welcome Message - Device Type: " + JSON.stringify(device.type));
     
-    // initialize voice analytics 
-    VoiceInsights.initialize(session, VI_APP_TOKEN);
-
     // check current data to see if there are active storms and if so change the welcome message
     var s3 = new aws.S3();
 
@@ -364,11 +359,8 @@ function getWelcomeResponse(session, device, callback) {
             }
         }
 
-        VoiceInsights.track('WelcomeMessage', null, speechOutput, (err, res) => {
-	        console.log('voice insights logged' + JSON.stringify(res));
-	        callback(sessionAttributes,
+	    callback(sessionAttributes,
                 buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-        });
     });
 }
 
@@ -390,11 +382,8 @@ function getHelpResponse(device, callback) {
         "list storm names or storm history.";
     var shouldEndSession = false;
 
-    VoiceInsights.track('HelpMessage', null, speechOutput, (err, res) => {
-	    console.log('voice insights logged' + JSON.stringify(res));
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
-    });
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
 // this is the function that gets called to format the response when the user is done
@@ -406,11 +395,7 @@ function handleSessionEndRequest(device, callback) {
     // Setting this to true ends the session and exits the skill.
     var shouldEndSession = true;
 
-    VoiceInsights.track('EndMessage', null, speechOutput, (err, res) => {
-	    console.log('voice insights logged' + JSON.stringify(res));
-
-        callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, device, shouldEndSession));
-    });
+    callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, device, shouldEndSession));
 }
 
 // Sets the ocean in the session and prepares the speech to reply to the user.
@@ -439,10 +424,8 @@ function setOceanInSession(intent, session, device, callback) {
             "Please say either Atlantic or Pacific.";
     }
 
-    VoiceInsights.track('SetOceanPref', null, speechOutput, (err, res) => {
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
-    });
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
 function storeOceanAttributes(ocean) {
@@ -481,12 +464,8 @@ function getStormNames(intent, session, device, callback) {
             "by saying Atlantic Ocean or Pacific Ocean";
     }
 
-    VoiceInsights.track('GetStormNames', null, speechOutput, (err, res) => {
-        console.log('voice insights logged' + JSON.stringify(res));
-
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
-    });
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
 // This highlights the summary of storms for the current year - 2017
@@ -573,11 +552,8 @@ function getCurrentYearHistory(intent, session, device, callback) {
     var repromptText = "If you would like information about current storms, please " +
         "say List Current Storms.";
 
-    VoiceInsights.track('GetCurrentYearHistory', null, speechOutput, (err, res) => {
-        console.log('voice insights logged' + JSON.stringify(res));
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-    });
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
 }
 
 // This function returns storm history. It checks to make sure that the year one where data
@@ -697,11 +673,8 @@ function getWhichYear(intent, session, device, callback) {
                             "something like tell me about storms from 2007.";
                     }
 
-                    VoiceInsights.track('StormHistory', stormHistoryArray.stormYear, speechOutput, (err, res) => {
-                        console.log('voice insights logged' + JSON.stringify(res));
-                        callback(sessionAttributes,
-                            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-                    });
+                    callback(sessionAttributes,
+                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
                 };
             });
             
@@ -809,11 +782,8 @@ function getThisYearStorm(intent, session, device, callback) {
                         "please say Storm History.";
                 }
 
-                VoiceInsights.track('ListCurrentYearStorms', null, speechOutput, (err, res) => {
-                    console.log('voice insights logged' + JSON.stringify(res));
-                    callback(sessionAttributes,
-                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-                });
+                callback(sessionAttributes,
+                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
                 
             } else {
                 console.log('read detail about an active storm');
@@ -955,11 +925,8 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
     var shouldEndSession = false;
 
     if (device.type === "Legacy") {
-        VoiceInsights.track('GetActiveStorm', null, speechOutput, (err, res) => {
-            console.log('voice insights logged' + JSON.stringify(res));
-            callback(sessionAttributes,
-                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-        });
+        callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
     } else {
         console.log("Active Storms: " + JSON.stringify(activeStorms));
         callback(sessionAttributes,
@@ -1010,11 +977,8 @@ function getCompleteList(intent, session, device, callback) {
             "please say Storm History.";
     }
 
-    VoiceInsights.track('GetCompleteList', null, speechOutput, (err, res) => {
-        console.log('voice insights logged' + JSON.stringify(res));
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
-    });
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
 // this function provides details about a particular storm
@@ -1116,12 +1080,8 @@ function getStormDetail(intent, session, device, callback) {
                 repromptText = "Would you like to hear more about other storms?  If so, please " +
                     "let me know by saying something like Tell me about Hurricane Katrina.";
 
-                VoiceInsights.track('GetStormDetail', stormDetail.stormName, speechOutput, (err, res) => {
-                    console.log('voice insights logged' + JSON.stringify(res));
-    
-                    callback(sessionAttributes,
-                        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-                });
+                callback(sessionAttributes,
+                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
             }
         });
     } else {
@@ -1207,11 +1167,8 @@ function getStormFact(intent, session, device, callback) {
         "say something like Give me a storm fact.";
     var cardOutput = "Tropical Storm Fact\n" + randomFact;
 
-    VoiceInsights.track('GetStormFact', null, speechOutput, (err, res) => {
-        console.log('voice insights logged' + JSON.stringify(res));
-        callback(sessionAttributes,
-            buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
-    });
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
 
 }
 // --------------- Helpers that build all of the responses -----------------------
