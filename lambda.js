@@ -1,5 +1,5 @@
 /**
- * This skill provides details about hurricanes through 2016, both prior years as well as current
+ * This skill provides details about hurricanes through 2018, both prior years as well as current
  */
 
 var aws = require('aws-sdk');
@@ -9,66 +9,14 @@ var APP_ID = 'amzn1.echo-sdk-ams.app.709af9ef-d5eb-48dd-a90a-0dc48dc822d6';
 
 // Get this years storm names
 
-var atlanticStorms = [
-    {
-        "stormYear": 2017,
-        "stormNames": [
-            "Arlene", 
-            "Bret", 
-            "Cindy",
-            "Don",
-            "Emily",
-            "Franklin",
-            "Gert",
-            "Harvey",
-            "Irma",
-            "Jose",
-            "Katia",
-            "Lee",
-            "Maria",
-            "Nate",
-            "Ophelia",
-            "Philippe",
-            "Rina",
-            "Sean",
-            "Tammy",
-            "Vince",
-            "Whitney"
-        ]
-    }
-];
+var atlanticStorms = require("data/atlantic2018.json");
+var pacificStorms = require("data/pacific2018.json");
 
-var pacificStorms = [
-    {
-        "stormYear": 2017,
-        "stormNames": [
-            "Adrian", 
-            "Beatriz", 
-            "Calvin",
-            "Dora",
-            "Eugene",
-            "Fernanda",
-            "Greg",
-            "Hilary",
-            "Irwin",
-            "Jova",
-            "Kenneth",
-            "Lidia",
-            "Max",
-            "Norma",
-            "Otis",
-            "Pilar",
-            "Ramon",
-            "Selma",
-            "Todd",
-            "Veronica",
-            "Wiley",
-            "Xina",
-            "York",
-            "Zelda"
-        ]
-    }
-];
+// current years storm names that have already occurred
+var currYearStormArray = [];
+//            {"stormName":"Emily", "ocean":"Atlantic", "level":"Tropical Storm"},
+//            {"stormName":"Franklin", "ocean":"Atlantic", "level":"Hurricane"},
+//];
 
 // storm names that historical information is available for in the datasets
 // [ToDo: Add hurricane Omar, Paloma, Hanna]
@@ -218,9 +166,9 @@ function onIntent(intentRequest, session, context, callback) {
         getStormNames(intent, session, device, callback);
     } else if ("SetOceanPreference" === intentName) {
         setOceanInSession(intent, session, device, callback);
-    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2017) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2018) {
         getCurrentYearHistory(intent, session, device, callback);
-    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2017) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2018) {
         getWhichYear(intent, session, device, callback);
     } else if ("ThisYearsStorms" === intentName || "AMAZON.YesIntent" === intentName) {
         console.log("Intent Name: " + intentName + " From: " + country);
@@ -468,41 +416,14 @@ function getStormNames(intent, session, device, callback) {
         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
-// This highlights the summary of storms for the current year - 2017
+// This highlights the summary of storms for the current year - 2018
 function getCurrentYearHistory(intent, session, device, callback) {
     var oceanPreference;
     var sessionAttributes = {};
     var shouldEndSession = false;
-    var cardTitle = "Storm History for 2017";
+    var cardTitle = "Storm History for 2018";
 
     console.log("Get Current Year History");
-
-    var currYearStormArray = [
-            {"stormName":"Arlene", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Bret", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Cindy", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Don", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Emily", "ocean":"Atlantic", "level":"Tropical Storm"}, 
-            {"stormName":"Franklin", "ocean":"Atlantic", "level":"Hurricane"}, 
-            {"stormName":"Gert", "ocean":"Atlantic", "level":"Hurricane"}, 
-            {"stormName":"Harvey", "ocean":"Atlantic", "level":"Hurricane"}, 
-            {"stormName":"Irma", "ocean":"Atlantic", "level":"Hurricane"}, 
-            {"stormName":"Jose", "ocean":"Atlantic", "level":"Hurricane"}, 
-            {"stormName":"Katia", "ocean":"Atlantic", "level":"Hurricane"},
-            {"stormName":"Lee", "ocean":"Atlantic", "level":"Hurricane"},
-            {"stormName":"Maria", "ocean":"Atlantic", "level":"Hurricane"},
-            {"stormName":"Adrian", "ocean":"Pacific", "level":"Tropical Storm"}, 
-            {"stormName":"Beatriz", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Calvin", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Dora", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Eugene", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Fernanda", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Greg", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Hilary", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Irwin", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Kenneth", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Lidia", "ocean":"Atlantic", "level":"Tropical Storm"}
-        ];
 
     var atlanticTropStorms = 0;
     var atlanticHurricanes = 0;
@@ -529,25 +450,23 @@ function getCurrentYearHistory(intent, session, device, callback) {
 
     // format response by merging the summary from the array with natural language
 
-    var speechOutput = "So far this year there have been " + atlanticHurricanes +
-        " hurricanes in the Atlantic and " + pacificHurricanes + " in the Pacific. ";
-//    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
-//        "in either the Atlantic or Pacific Oceans. " +
-        speechOutput = speechOutput + "There have been " + atlanticTropStorms +
-        " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
-        " I have detailed information about Hurricanes Harvey, Irma, and Maria. If you would like details " +
-        " please say something like, Tell me about Hurricane Harvey. ";
-        //" If you would like to hear about current active storms please say " +
-        //" Current Storms and I will give a detailed overview of what is currently active. ";
+//    var speechOutput = "So far this year there have been " + atlanticHurricanes +
+//        " hurricanes in the Atlantic and " + pacificHurricanes + " in the Pacific. ";
+    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
+        "in either the Atlantic or Pacific Oceans. " +
+        "If you would like to hear about current active storms please say " +
+        "Current Storms and I will give a detailed overview of what is currently active. ";
+//        speechOutput = speechOutput + "There have been " + atlanticTropStorms +
+//        " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
+//        " I have detailed information about Hurricanes Harvey, Irma, and Maria. If you would like details " +
+//        " please say something like, Tell me about Hurricane Harvey. ";
         
     var cardOutput = "Atlantic Ocean\n" + atlanticHurricanes +
         " Hurricanes\n" + atlanticTropStorms +
         " Tropical Storms\n" + "Pacific Ocean\n" + pacificHurricanes +
         " Hurricanes\n" + pacificTropStorms +
         " Tropical Storms\n" +
-        " Major Storms\n" +
- //       " Hurricane Matthew - caused $5 Billion in damage in Haiti and Southeastern " +
-        "United States.";
+        " Major Storms\n";
 
     var repromptText = "If you would like information about current storms, please " +
         "say List Current Storms.";
@@ -586,7 +505,7 @@ function getWhichYear(intent, session, device, callback) {
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
         cardTitle = "Storm History for " + requestYear;
-        if (requestYear > 1990 && requestYear < 2017) {
+        if (requestYear > 1990 && requestYear < 2018) {
             
             var s3 = new aws.S3();
             
@@ -682,10 +601,10 @@ function getWhichYear(intent, session, device, callback) {
             console.log('Year selected for storm history outside of available data');
 
             speechOutput = "Sorry, I don't have information for " + requestYear + ". " +
-                "I do have information on storms between 1991 and 2017.  Please let me " +
+                "I do have information on storms between 1991 and 2018.  Please let me " +
                 "know which year I can provide within that range.";
 
-            repromptText = "Please state a year between 1991 and 2017. " +
+            repromptText = "Please state a year between 1991 and 2018. " +
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
@@ -713,7 +632,7 @@ function getThisYearStorm(intent, session, device, callback) {
     var sessionAttributes = {};
     var speechOutput = "";
     var cardOutput = "";
-    var cardTitle = "Storm Information for 2017";
+    var cardTitle = "Storm Information for 2018";
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -801,7 +720,7 @@ function getThisYearStorm(intent, session, device, callback) {
 function replyActiveStorms(storms, returnData, intent, session, device, callback) {
     var sessionAttributes = {};
     var cardOutput = "";
-    var cardTitle = "Storm Information for 2017";
+    var cardTitle = "Storm Information for 2018";
     var activeStorms = [];
     
     if (session.attributes) {
@@ -960,7 +879,7 @@ function getCompleteList(intent, session, device, callback) {
         repromptText = "Please let me know which storm I can provide information on by saying " +
             "Atlantic Ocean or Pacific Ocean.";
     } else {
-        speechOutput = speechOutput + "The 2017 storm names for the " + oceanPreference + " Ocean will be ";
+        speechOutput = speechOutput + "The 2018 storm names for the " + oceanPreference + " Ocean will be ";
         if (oceanPreference == "Atlantic") 
             currentYearStorms = atlanticStorms[0];
         else
