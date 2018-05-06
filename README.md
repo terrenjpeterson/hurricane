@@ -11,6 +11,7 @@ This is an Alexa skill that provides updates on hurricanes based on data from th
 - [What are the different intents in the skill?](#intents-in-skill)
 - [Where does the storm data come from?](#storm-data-from-NHC)
 - [How does the skill support the Echo Show?](#visual-rendering-for-echo-show)
+- [Which years does this cover?](#years-covered)
 
 ## Overview NLU Models
 
@@ -67,3 +68,6 @@ For an example of how to use the Echo Show in the current SDK, use [this repo](h
 To determine if the device has a screen, it looks for the context.System.device.supportedInterfaces.Display attribute in the main handler of the function, then passes the attribute to functions processed in the intent.
 The helper that renders the Speechlet response was modified to look for this attribute, then formats the JSON response to include the hurricane background using the BodyTemplate1 format.
 
+## Years Covered
+
+This has been updated with storm data for 2018.
