@@ -1,0 +1,23 @@
+{
+  "name": "hurricane",
+  "version": "3.0.0",
+  "description": "An Alexa skill that informs you about hurricanes past and present.",
+  "main": "lambda.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/terrenjpeterson/hurricane.git"
+  },
+  "keywords": [
+    "alexa",
+    "hurricane",
+    "storms"
+  ],
+  "author": "Terren Peterson",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "alexa-sdk": "^1.0.24"
+  }
+}
