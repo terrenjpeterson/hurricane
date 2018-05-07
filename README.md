@@ -1,6 +1,7 @@
 # Alexa Skill - Hurricane Center
 
 This is an Alexa skill that provides updates on hurricanes based on data from the National Hurricane Center.
+It was first published to the Alexa Skill store in 2016, and has been used in two hurricane seasons (2016 & 2017).
 
 ![](interaction_model/hurricane-logo-108.jpg)
 
