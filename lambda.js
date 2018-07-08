@@ -69,7 +69,14 @@ exports.handler = function (event, context) {
             console.log("session ended request received");
             onSessionEnded(event.request, event.session);
             context.succeed();
-        }
+	// this was added to handle the Can Fulfill Intent Request feature
+        } else if (event.request.type === "CanFulfillIntentRequest") {
+	    console.log("can fulfill request received ");
+            onFulfillRequest(event.request, event.session, event.context,
+                function callback(sessionAttributes, speechletResponse) {
+                    context.succeed(buildNoSessionResponse(speechletResponse));
+                });
+	}
     } catch (e) {
         context.fail("Exception: " + e);
     }
@@ -106,6 +113,13 @@ function onLaunch(launchRequest, session, context, callback) {
 
     // Dispatch to your skill's launch.
     getWelcomeResponse(session, device, callback);
+}
+
+// Called when Alexa is polling for more detail
+function onFulfillRequest(intentRequest, session, context, callback) {
+    console.log("processing on fulfillment request.");
+
+    handleCanFulfillRequest(intentRequest, session, callback);
 }
 
 /**
@@ -284,6 +298,40 @@ function getWelcomeResponse(session, device, callback) {
 	    callback(sessionAttributes,
                 buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
     });
+}
+
+// this is the function that handles broad requests coming in natively from Alexa
+function handleCanFulfillRequest(intentRequest, session, callback) {
+    var sessionAttributes = {};
+    const intentName = intentRequest.intent.name;
+
+    console.log("Can Fulfill Request for intent name:" + intentName);
+
+    if ("ListStormNames" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));	
+    } else if ("SetOceanPreference" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("NO", buildSlotDetail("Ocean", intentRequest.intent.slots)));
+    } else if ("StormsFromPriorYears" == intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", buildSlotDetail("Date", intentRequest.intent.slots)));
+    } else if ("ThisYearsStorms" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));
+    } else if ("CurrentYearHistory" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));
+    } else if ("CompleteListOfStorms" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));
+    } else if ("GetStormDetail" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", buildSlotDetail("Storm", intentRequest.intent.slots)));
+    } else if ("GiveStormFact" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));
+    }
 }
 
 // this is the function that gets called to format the response to the user when they ask for help
@@ -986,7 +1034,7 @@ function getStormDetail(intent, session, device, callback) {
             var speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
                 "say current storms. ";
         // new logic added on Sept 19th - trying to catch condition where people are looking for current storms.
-        } else if (stormName === "xxx") {
+        } else if (stormName === "Chris") {
             console.log("New storm condition");
             var speechOutput = stormName + " is a current active storm. For specifics on it's latest status, " +
                 "please say, Current Storm Details.";
@@ -1205,4 +1253,93 @@ function buildResponse(sessionAttributes, speechletResponse) {
         sessionAttributes: sessionAttributes,
         response: speechletResponse
     };
+}
+
+function buildNoSessionResponse(speechletResponse) {
+    return {
+	version: "1.0",
+	response: speechletResponse
+    };
+}
+
+function buildFulfillQueryResponse(canFulfill, slotInfo) {
+    console.log("build fulfill query response");
+    if (slotInfo !== null) {
+        return {
+    	    "canFulfillIntent": {
+	        "canFulfill": canFulfill,
+	        "slots": slotInfo
+	    }
+        };
+    } else {
+	return {
+	    "canFulfillIntent": {
+		"canFulfill": canFulfill
+	    }
+	};
+    }
+}
+
+// this validates information coming in from slots and manufactures the correct responses
+function buildSlotDetail(slotName, slots) {
+    console.log("build slot detail");
+    console.log("Slots:" + JSON.stringify(slots));
+
+    if (slotName === "Ocean") {
+	return {
+	    "Ocean": {
+		"canUnderstand": "YES",
+		"canFulfill": "NO"
+	    }
+	};
+    } else if (slotName === "Date") {
+	// validate that the date of the storm is in the last thirty years
+        if (slots.Date.value > 1990 && slots.Date.value < 2018) {
+            return {
+                "Date": {
+                    "canUnderstand": "YES",
+                    "canFulfill": "YES"
+                }
+            };
+	} else {
+            return {
+                "Date": {
+                    "canUnderstand": "YES",
+                    "canFulfill": "NO"
+                }
+            };
+	}
+    } else if (slotName === "Storm") {
+	// validate that the storm name is in the available list of names
+	var stormDetailExists = false;
+    	for (var i = 0; i < stormDetailAvail.length ; i++) {
+            if (stormDetailAvail[i].stormName.toLowerCase() == slots.Storm.value.toLowerCase()) {
+                stormDetailExists = true;
+            }
+	}
+	// create correct response object
+	if (stormDetailExists) {
+            return {
+                "Storm": {
+                    "canUnderstand": "YES",
+                    "canFulfill": "YES"
+                }
+	    };
+	} else {
+            return {
+                "Storm": {
+                    "canUnderstand": "YES",
+                    "canFulfill": "NO"
+                }
+            };
+	}
+    } else {
+	// this means that there is no match in the slot provided - respond accordingly
+	return {
+	    "slotName1": {
+                "canUnderstand": "NO",
+                "canFulfill": "NO"
+            }
+        };
+    }
 }
