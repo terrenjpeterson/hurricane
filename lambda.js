@@ -5,53 +5,27 @@
 var aws = require('aws-sdk');
 
 // this is used to track the application
-var APP_ID = 'amzn1.echo-sdk-ams.app.709af9ef-d5eb-48dd-a90a-0dc48dc822d6';
+const APP_ID = 'amzn1.echo-sdk-ams.app.709af9ef-d5eb-48dd-a90a-0dc48dc822d6';
 
 // Get this years storm names
-
-var atlanticStorms = require("data/atlantic2018.json");
-var pacificStorms = require("data/pacific2018.json");
+const atlanticStorms = require("data/atlantic2018.json");
+const pacificStorms = require("data/pacific2018.json");
 
 // current years storm names that have already occurred
-var currYearStormArray = [];
-//            {"stormName":"Emily", "ocean":"Atlantic", "level":"Tropical Storm"},
-//            {"stormName":"Franklin", "ocean":"Atlantic", "level":"Hurricane"},
-//];
+var currYearStormArray = [
+            {"stormName":"Alberto", "ocean":"Atlantic", "level":"Tropical Storm"},
+            {"stormName":"Beryl", "ocean":"Atlantic", "level":"Hurricane"},
+            {"stormName":"Aletta", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Bud", "ocean":"Pacific", "level":"Hurricane"}
+];
 
 // storm names that historical information is available for in the datasets
 // [ToDo: Add hurricane Omar, Paloma, Hanna]
 
-var stormDetailAvail = [
-            {"stormName":"Danny", "ocean":"Atlantic", "stormYear":2015}, 
-            {"stormName":"Katrina", "ocean":"Atlantic", "stormYear":2005}, 
-            {"stormName":"Sandy", "ocean":"Atlantic", "stormYear":2012}, 
-            {"stormName":"Irene", "ocean":"Atlantic", "stormYear":2011}, 
-            {"stormName":"Ike", "ocean":"Atlantic", "stormYear":2008},
-            {"stormName":"Gonzalo", "ocean":"Atlantic", "stormYear":2014},
-            {"stormName":"Isaac", "ocean":"Atlantic", "stormYear":2012},
-            {"stormName":"Alex", "ocean":"Atlantic", "stormYear":2010},
-            {"stormName":"Karl", "ocean":"Atlantic", "stormYear":2010},
-            {"stormName":"Dean", "ocean":"Atlantic", "stormYear":2007},
-            {"stormName":"Felix", "ocean":"Atlantic", "stormYear":2007},
-            {"stormName":"Ernesto", "ocean":"Atlantic", "stormYear":2006},
-            {"stormName":"Charley", "ocean":"Atlantic", "stormYear":2004},
-            {"stormName":"Rita", "ocean":"Atlantic", "stormYear":2005},
-            {"stormName":"Wilma", "ocean":"Atlantic", "stormYear":2005},
-            {"stormName":"Linda", "ocean":"Pacific", "stormYear":2015},
-            {"stormName":"Patricia", "ocean":"Pacific", "stormYear":2015},
-            {"stormName":"Odile", "ocean":"Pacific", "stormYear":2014},
-            {"stormName":"Manuel", "ocean":"Pacific", "stormYear":2013},
-            {"stormName":"Paul", "ocean":"Pacific", "stormYear":2012},
-            {"stormName":"Jova", "ocean":"Pacific", "stormYear":2011},
-            {"stormName":"Andrew", "ocean":"Atlantic", "stormYear":1992},
-            {"stormName":"Hugo", "ocean":"Atlantic", "stormYear":1989},
-            {"stormName":"Earl", "ocean":"Atlantic", "stormYear":2016},
-            {"stormName":"Matthew", "ocean":"Atlantic", "stormYear":2016},
-            {"stormName":"Otto", "ocean":"Atlantic", "stormYear":2016},            
-            {"stormName":"Harvey", "ocean":"Atlantic", "stormYear":2017},
-            {"stormName":"Irma", "ocean":"Atlantic", "stormYear":2017},
-            {"stormName":"Maria", "ocean":"Atlantic", "stormYear":2017}
-];
+const stormDetailAvail = require("data/stormDetailAvail.json");
+
+// array of storm facts
+const stormFacts = require("data/stormFacts.json");
 
 // location of the storm dataset
 var stormDataBucket = 'hurricane-data';
@@ -450,14 +424,15 @@ function getCurrentYearHistory(intent, session, device, callback) {
 
     // format response by merging the summary from the array with natural language
 
-//    var speechOutput = "So far this year there have been " + atlanticHurricanes +
-//        " hurricanes in the Atlantic and " + pacificHurricanes + " in the Pacific. ";
-    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
-        "in either the Atlantic or Pacific Oceans. " +
-        "If you would like to hear about current active storms please say " +
-        "Current Storms and I will give a detailed overview of what is currently active. ";
-//        speechOutput = speechOutput + "There have been " + atlanticTropStorms +
-//        " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
+    var speechOutput = "So far this year there have been " + atlanticHurricanes +
+        " hurricanes in the Atlantic and " + pacificHurricanes + " in the Pacific. ";
+//    var speechOutput = "It is still early in the season, and there have been no hurricanes " +
+//        "in either the Atlantic or Pacific Oceans. " +
+//        "If you would like to hear about current active storms please say " +
+//        "Current Storms and I will give a detailed overview of what is currently active. ";
+        speechOutput = speechOutput + "There have been " + atlanticTropStorms +
+        " Tropical Storms in the Atlantic and " + pacificTropStorms + " in the Pacific. " +
+	"If you want information on current storms, please say List Current Storms. ";
 //        " I have detailed information about Hurricanes Harvey, Irma, and Maria. If you would like details " +
 //        " please say something like, Tell me about Hurricane Harvey. ";
         
@@ -468,7 +443,7 @@ function getCurrentYearHistory(intent, session, device, callback) {
         " Tropical Storms\n" +
         " Major Storms\n";
 
-    var repromptText = "If you would like information about current storms, please " +
+    const repromptText = "If you would like information about current storms, please " +
         "say List Current Storms.";
 
     callback(sessionAttributes,
@@ -1039,48 +1014,8 @@ function getStormFact(intent, session, device, callback) {
     var cardTitle = "Storm Facts";
     var repromptText = "If you would like another tropical storm fact, please say give me a storm fact.";
 
-    var stormFacts = [
-        'The threshold for a tropical storm is sustained winds at 39 miles per hour. Tropical storms below this level are considered a tropical depression.',
-        'The threshold for a hurricane is sustained winds at 74 miles per hour.',
-        'The Saffir Simpson scale categories hurricanes into five levels. The classifications can provide some indication of the potential damage and flooding a hurricane will cause upon landfall.',
-        'In the Northern hemisphere, the tropical storm season begins on June 1st. Storms may begin before this date, however they are quite rare.',
-        'Category one hurricanes are defined as having sustained winds ranging from 74 to 95 miles per hour. Storms of this intensity usually cause no significant structural damage to most well-constructed permanent structures. They can topple unanchored mobile homes, as well as uproot or snap weak trees.',
-        'Category two hurricanes are defined as having sustained winds ranging from 96 to 110 miles per hour. Storms of this intensity often damage roofing material and inflict damage upon poorly constructed doors and windows.',
-        'Category three hurricanes are defined as having sustained winds ranging from 111 to 129 miles per hour. At this level, they are considered a major hurricane, and can cause some structural damage to small residences and utility buildings, particularly those of wood frame or manufactured materials.',
-        'Category four hurricanes are defined as having sustained winds ranging from 130 to 156 miles per hour. At this level, they can cause complete structural failure on small residences. Mobile and manufactured homes are often flattened. Most trees, except for the heartiest, are uprooted or snapped, isolating many areas.',
-        'Category five hurricanes are the strongest recorded, and are defined as having sustained winds above 157 miles per hour. At this level, they can cause catastophic damage if making landfall, both to structures and trees. Widespread power outages are common, and rebuilding efforts can take years.',
-        'No Category five hurricane is known to have made landfall as such in the eastern Pacific basin.',
-        'Hurricane Patricia was the most intense hurricane on record in the Western Hemisphere. On October 23rd, 2015, the maximum sustained winds were recorded at 215 mph for a one minute interval, and it recorded a pressure reading of 872 millibars. The storm lessened before hitting the Pacific coast of Mexico near Cuixmala, Jalisco, with winds of 150 mph. This made it the strongest landfalling hurricane on record along the Pacific coast of Mexico.',
-        'Hurricane Felix was the southernmost landfalling Category 5 hurricane in the Atlantic. It is also the most recent Atlantic hurricane to make landfall as a Category 5 until Hurricane Irma in 2017. Hurricane Felix made landfall in 2007, with initial impacts to Honduras and Nicaragua. At least 133 people were reported dead. At least 130 of them were in Nicaragua.',
-        'Hurricane Katrina was the costliest natural disaster and one of the five deadliest hurricanes in the history of the United States. Overall, at least 1,245 people died in the hurricane and subsequent floods, making it the deadliest United States hurricane since the 1928 Okeechobee hurricane. Total property damage was estimated at $108 billion in 2005 US Dollars. ',
-        'Hurricane Rita was the fourth-most intense Atlantic hurricane ever recorded and the most intense tropical cyclone ever observed in the Gulf of Mexico. Southeast Texas where Rita made landfall suffered from catastrophic-to-severe flooding and wind damage.',
-        'Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin, and was the most intense tropical cyclone recorded in the western hemisphere until Hurricane Patricia in 2015. Wilma made several landfalls, with the most destructive effects felt in the Yucatan Peninsula of Mexico, Cuba, and the US state of Florida.',
-        'The 2005 Atlantic hurricane season was the most active Atlantic hurricane season in recorded history, shattering numerous records. The impact of the season was widespread and ruinous with an estimated 3,913 deaths and record damage of about $159.2 billion.',
-        'Hurricane Hugo was a powerful Cape Verde-type hurricane that caused widespread damage and loss of life in the Leeward Islands, Puerto Rico, and the Southeast United States. It formed over the eastern Atlantic near the Cape Verde Islands on September 9, 1989. Hurricane Hugo caused 34 fatalities, most by electrocution or drowning, in the Caribbean and 27 in South Carolina, left nearly 100,000 homeless, and resulted in $10 billion in damage overall, making it the most damaging hurricane ever recorded at the time.',
-        'Hurricane Andrew was a Category 5 Atlantic hurricane that struck South Florida in August 1992, and was the most destructive hurricane in Floridas history. The storm was also ranked as the costliest hurricane in United States history until being surpassed by Katrina in 2005. Andrew caused major damage in the Bahamas and Louisiana as well, but the greatest impact was in South Florida, where it produced devastating winds with speeds as high as 165 mph.',
-        'Forming in 1969, Hurricane Camille was the second strongest U.S. landfalling hurricane in recorded history in terms of atmospheric pressure, behind the Labor Day Hurricane in 1935. The hurricane flattened nearly everything along the coast of the U.S. state of Mississippi, and caused additional flooding and deaths inland while crossing the Appalachian Mountains of Virginia.',
-        'The 1935 Labor Day Hurricane was the most intense hurricane to make landfall in the United States on record, as well as the 3rd most intense Atlantic hurricane ever. The compact and intense hurricane caused extreme damage in the upper Florida Keys, as a storm surge of approximately 18 to 20 feet swept over the low-lying islands. The hurricane also caused additional damage in northwest Florida, Georgia, and the Carolinas.',
-        'The 1938 New England Hurricane (also referred to as the Great New England Hurricane and Long Island Express) was one of the deadliest and most destructive tropical cyclones to strike New England.  It is estimated that the hurricane killed 682 people, damaged or destroyed more than 57,000 homes. Damaged trees and buildings were still seen in the affected areas as late as 1951.',
-        'Hurricane Mitch was the second deadliest Atlantic hurricane on record, after the Great Hurricane of 1780. Nearly 11,000 people were killed with over 11,000 left missing by the end of 1998. Additionally, roughly 2.7 million were left homeless as a result of the hurricane. Hurricane Mitch dropped historic amounts of rainfall in Honduras, Guatemala, and Nicaragua, with unofficial reports of up to 75 inches.',
-        'Hurricane Carol in 1953 was the strongest storm of the Atlantic hurricane season that year, and the first Category 5 hurricane in the Atlantic basin since the 1938 New England hurricane. Carol is also the first named storm to attain Category 5 status. Carol developed on August 28 off the west coast of Africa, although the Weather Bureau did not initiate advisories until five days later.',
-        'In 1992, Hurricane Iniki was the most powerful hurricane to strike the U.S. state of Hawaii in recorded history. Iniki struck the island of Kauai on September 11 at peak intensity. It had winds of 145 miles per hour. Damage was greatest on Kauai, where the hurricane destroyed more than 1,400 houses and severely damaged more than 5,000.',
-        'Hurricane Harvey was a Category 4 hurricane that struck Texas in August 2017. With peak accumulations of 51.88 inches, Harvey is the wettest tropical cyclone on record in the contiguous United States.',
-        'During Hurricane Harvey, the local National Weather Service office in Houston observed all-time record daily rainfall accumulations on both August 26 and 27, measured at 14.4 inches and 16.08 inches respectively.',
-        'In 2016, Otto was the first Atlantic hurricane on record to have its eye cross over Costa Rica, and the first hurricane force system to traverse the nation.',
-        'An Atlantic Pacific crossover hurricane is a tropical cyclone that develops in the Atlantic Ocean and moves into the Pacific Ocean, or vice versa. Since reliable records began in 1851, a total of seventeen tropical cyclones have done this.',
-        'Prior to 2000, storms were re-named after crossing from the Gulf of Mexico into the Eastern Pacific. At the 22nd hurricane committee in 2000 it was decided that tropical cyclones that moved from the Atlantic to the Eastern Pacific basin and vice versa would no longer be renamed. Hurricane Otto in 2016 was the first storm to cross from one basin to another to apply under this rule.',
-        'In 2017, Hurricane Franklin was the first hurricane to make landfall in the Mexican state of Veracruz since Hurricane Karl in 2010.',
-        'In 2017, Hurricane Irma was an extremely powerful and catastrophic Cape Verde type hurricane, the strongest observed in the Atlantic since Wilma in 2005 in terms of maximum sustained winds.',
-        'In 2017, Hurricane Irma became the first major hurricane to make landfall in Florida since Wilma in 2005.',
-        'In 2017, Hurricane Irma was also the most intense Atlantic hurricane to strike the United States since Katrina in 2005.',
-        'In 2017, Hurricane Maria was the tenth most intense Atlantic hurricane on record, the worst natural disaster in Dominica in its recorded history.',
-        'In 2017, Hurricane Maria became the strongest tropical storm to hit Puerto Rico since 1928.',
-        'In 2017, Hurricane Maria completely destroyed the island of Puerto Ricos power grid, leaving all 3.4 million residents without electricity.',
-        'In 2017, Hurricane Marias outer eyewall was reported by the National Hurricane Center to have crossed Saint Croy while the hurricane was at Category 5 intensity.'
-    ];
-    
     const factIndex = Math.floor(Math.random() * stormFacts.length);
-    const randomFact = stormFacts[factIndex];
+    const randomFact = stormFacts[factIndex].stormFact;
 
     var speechOutput = "Here is your tropical storm fact. " + randomFact + " If you would like to hear another fact, please " +
         "say something like Give me a storm fact.";
