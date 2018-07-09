@@ -1,7 +1,7 @@
 # Alexa Skill - Hurricane Center
 
 This is an Alexa skill that provides updates on hurricanes based on data from the National Hurricane Center.
-It was first published to the Alexa Skill store in 2016, and has been used in two hurricane seasons (2016 & 2017).
+It was first published to the Alexa Skill store in 2016, and has been used in three hurricane seasons (2016, 2017, 2018).
 
 ![](interaction_model/hurricane-logo-108.jpg)
 
@@ -13,6 +13,7 @@ It was first published to the Alexa Skill store in 2016, and has been used in tw
 - [Where does the storm data come from?](#storm-data-from-NHC)
 - [How does the skill support the Echo Show?](#visual-rendering-for-echo-show)
 - [Which years does this cover?](#years-covered)
+- [How does Name-free Interaction work?](#alexa-native)
 
 ## Overview NLU Models
 
@@ -72,3 +73,30 @@ The helper that renders the Speechlet response was modified to look for this att
 ## Years Covered
 
 This has been updated with storm data for 2018.
+
+## Alexa Native
+
+This skill is currently participating in the beta program to use Name-free Interaction.
+Name-free interaction is where Alexa gets a native question that it cannot handle, and then forwards to a custom skill.
+Alexa generates a CanFulfillIntentRequest is forwarded to the skill by the platform querying if a certain question can be answered.
+The skill responds back with a response object with a series of questions answered indicating if it can fulfill on the question.
+Here is a sample response object if a forecast is requested for a current storm (i.e. what is the forecast for Tropical Storm Chris).
+
+```sh
+{
+  "version": "1.0",
+  "response": {
+    "canFulfillIntent": {
+      "canFulfill": "YES",
+      "slots": {
+        "Storm": {
+          "canUnderstand": "YES",
+          "canFulfill": "YES"
+        }
+      }
+    }
+  }
+}
+```
+
+The skill indicates that it can handle the request, and a subsequent intent is triggered with the actual user intent.
