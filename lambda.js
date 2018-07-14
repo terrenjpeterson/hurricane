@@ -307,6 +307,7 @@ function handleCanFulfillRequest(intentRequest, session, callback) {
 
     console.log("Can Fulfill Request for intent name:" + intentName);
 
+    // depending on the intent determine if a response can be provided
     if ("ListStormNames" === intentName) {
         callback(sessionAttributes,
             buildFulfillQueryResponse("YES", null));	
@@ -331,6 +332,10 @@ function handleCanFulfillRequest(intentRequest, session, callback) {
     } else if ("GiveStormFact" === intentName) {
         callback(sessionAttributes,
             buildFulfillQueryResponse("YES", null));
+    } else {
+	// this handles all the other scenarios - i.e. Scroll Down Intent - that make no sense
+	console.log("No match on intent name: " + intentName);
+	callback(sessionAttributes, buildFulfillQueryResponse("NO", null));
     }
 }
 
@@ -1008,7 +1013,7 @@ function getStormDetail(intent, session, device, callback) {
                 else
                     speechOutput = speechOutput + "It did not make landfall. ";
                     
-                speechOutput = speechOutput + "On " + stormDetail.hurrEnd + " the winds dropped below hurricane status.";
+                speechOutput = speechOutput + "On " + stormDetail.hurrEnd + " the winds dropped below hurricane status. ";
 
                 if (stormDetail.financialDamage != null) {
                     speechOutput = speechOutput + " It caused significant physical damage, totalling " + 
@@ -1027,20 +1032,21 @@ function getStormDetail(intent, session, device, callback) {
             }
         });
     } else {
-    
+ 	var speechOutput = "";
+   
         // this will be processed in case there wasn't a matching storm name to provide details about
         if (stormName == null) {
             console.log("No storm name provided - redirect with a response message.")
-            var speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
+            speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
                 "say current storms. ";
         // new logic added on Sept 19th - trying to catch condition where people are looking for current storms.
-        } else if (stormName === "Chris") {
+        } else if (stormName.toLowerCase() === "chris") {
             console.log("New storm condition");
-            var speechOutput = stormName + " is a current active storm. For specifics on it's latest status, " +
-                "please say, Current Storm Details.";
+            speechOutput = "Tropical Storm Chris is an active storm currently in the Atlantic Ocean. " +
+		"For specifics on it's latest location as well as forecast details, please say, Current Storm Details.";
         } else {
             console.log("Storm name " + stormName + " did not exist in records. Respond back with message as such.")
-            var speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
+            speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
                 "Please provide a different storm name that you would like information on. For example, " +
                 "say, Tell me about Hurricane Katrina.";
         }
