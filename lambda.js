@@ -175,8 +175,10 @@ function onIntent(intentRequest, session, context, callback) {
         getHelpResponse(device, callback);
     } else if ("AMAZON.RepeatIntent" === intentName || "AMAZON.NextIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
-    } else if ("AMAZON.StopIntent" === intentName || "AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
+    } else if ("AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
         handleSessionEndRequest(device, callback);
+    } else if ("AMAZON.StopIntent" === intentName) {
+	handleSessionStopRequest(device, callback);
     } else {
         throw "Invalid intent";
     }
@@ -371,6 +373,19 @@ function handleSessionEndRequest(device, callback) {
     var shouldEndSession = true;
 
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, device, shouldEndSession));
+}
+
+// this is the function that gets called to format the response when the user requests stop
+function handleSessionStopRequest(device, callback) {
+    const cardTitle = "Thanks for using Hurricane Center";
+    const speechOutput = "Okay, is there any other information I can provide you about tropical storms? " +
+	"For example, you can say, tell me a storm fact.";
+    const repromptText = "What other information would you like on tropical storms? For example, you can " +
+	"say, What are the storms for this year?";
+
+    const shouldEndSession = false;
+
+    callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
 // Sets the ocean in the session and prepares the speech to reply to the user.
