@@ -12,11 +12,16 @@ const atlanticStorms = require("data/atlantic2018.json");
 const pacificStorms = require("data/pacific2018.json");
 
 // current years storm names that have already occurred
-var currYearStormArray = [
+const currYearStormArray = [
             {"stormName":"Alberto", "ocean":"Atlantic", "level":"Tropical Storm"},
             {"stormName":"Beryl", "ocean":"Atlantic", "level":"Hurricane"},
+            {"stormName":"Chris", "ocean":"Atlantic", "level":"Hurricane"},
             {"stormName":"Aletta", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Bud", "ocean":"Pacific", "level":"Hurricane"}
+            {"stormName":"Bud", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Carlotta", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Daniel", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Emilia", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Fabio", "ocean":"Pacific", "level":"Hurricane"}
 ];
 
 // storm names that historical information is available for in the datasets
@@ -958,14 +963,20 @@ function getStormDetail(intent, session, device, callback) {
 
     console.log("Providing detail on storm name: " + stormName);
     
-    //console.log("session attributes: " + sessionAttributes);
-
+    // attempt to find a match of the storm name provided in the slot
     for (i = 0; i < stormDetailAvail.length ; i++) {
-        if (stormName != null)
+        if (stormName != null) {
+	    // check if period was added to end of storm name
+	    if (stormName[stormName.length-1] === ".") {
+                console.log("Removed extra period from slot name.");
+                stormName = stormName.slice(0,(stormName.length - 1));;
+            }
+
             if (stormDetailAvail[i].stormName.toLowerCase() == stormName.toLowerCase()) {
                 stormDetailExists = true;
                 var ocean = stormDetailAvail[i].ocean;
             }
+	}
     }
 
     if (stormDetailExists) {
