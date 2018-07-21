@@ -12,21 +12,10 @@ const atlanticStorms = require("data/atlantic2018.json");
 const pacificStorms = require("data/pacific2018.json");
 
 // current years storm names that have already occurred
-const currYearStormArray = [
-            {"stormName":"Alberto", "ocean":"Atlantic", "level":"Tropical Storm"},
-            {"stormName":"Beryl", "ocean":"Atlantic", "level":"Hurricane"},
-            {"stormName":"Chris", "ocean":"Atlantic", "level":"Hurricane"},
-            {"stormName":"Aletta", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Bud", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Carlotta", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Daniel", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Emilia", "ocean":"Pacific", "level":"Tropical Storm"},
-            {"stormName":"Fabio", "ocean":"Pacific", "level":"Hurricane"}
-];
+const currYearStormArray = require("data/currStormData.json");
 
 // storm names that historical information is available for in the datasets
 // [ToDo: Add hurricane Omar, Paloma, Hanna]
-
 const stormDetailAvail = require("data/stormDetailAvail.json");
 
 // array of storm facts
@@ -343,6 +332,15 @@ function handleCanFulfillRequest(intentRequest, session, callback) {
         callback(sessionAttributes,
             buildFulfillQueryResponse("YES", buildSlotDetail("Storm", intentRequest.intent.slots)));
     } else if ("GiveStormFact" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));
+    } else if ("StormStrength" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", buildSlotDetail("HurricaneStrength", intentRequest.intent.slots)));
+    } else if ("TropicalStormStrength" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", null));
+    } else if ("DifferenceStorms" === intentName) {
         callback(sessionAttributes,
             buildFulfillQueryResponse("YES", null));
     } else {
@@ -1463,6 +1461,48 @@ function buildSlotDetail(slotName, slots) {
             return {
                 "Storm": {
                     "canUnderstand": "YES",
+                    "canFulfill": "NO"
+                }
+            };
+	}
+    } else if (slotName === "HurricaneStrength") {
+	// validate that the hurricane level is valid
+	if (slots.HurricaneStrength.value) {
+	    console.log("Validate Hurricane Strength Slot");
+	    var validStrengthLevel = false;
+	    if (slots.HurricaneStrength.value === "1") {
+		validStrengthLevel = true;
+	    } else if (slots.HurricaneStrength.value === "2") {
+                validStrengthLevel = true;
+            } else if (slots.HurricaneStrength.value === "3") {
+                validStrengthLevel = true;
+            } else if (slots.HurricaneStrength.value === "4") {
+                validStrengthLevel = true;
+            } else if (slots.HurricaneStrength.value === "5") {
+                validStrengthLevel = true; 
+	    }
+	    console.log("Flag:" + validStrengthLevel);
+	    // now create response object based on if the slot was valid
+	    if (validStrengthLevel) {
+		return {
+		    "HurricaneStrength": {
+			"canUnderstand": "YES",
+			"canFulfill": "YES"
+		    }
+		};
+	    } else {
+                return {
+                    "HurricaneStrength": {
+                        "canUnderstand": "YES",
+                        "canFulfill": "NO"
+                    }
+                };
+	    }
+	} else {
+	    // this handles if the query was made without a valid slot
+            return {
+                "HurricaneStrength": {
+                    "canUnderstand": "NO",
                     "canFulfill": "NO"
                 }
             };
