@@ -1344,10 +1344,14 @@ function buildSlotDetail(slotName, slots) {
     } else if (slotName === "Storm") {
 	// validate that the storm name is in the available list of names
 	var stormDetailExists = false;
-    	for (var i = 0; i < stormDetailAvail.length ; i++) {
-            if (stormDetailAvail[i].stormName.toLowerCase() == slots.Storm.value.toLowerCase()) {
-                stormDetailExists = true;
-            }
+	if (slots.Storm.value) {
+    	    for (var i = 0; i < stormDetailAvail.length ; i++) {
+                if (stormDetailAvail[i].stormName.toLowerCase() == slots.Storm.value.toLowerCase()) {
+                    stormDetailExists = true;
+                }
+	    }
+	} else {
+	    console.log("No storm name provided");
 	}
 	// create correct response object
 	if (stormDetailExists) {
