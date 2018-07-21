@@ -176,6 +176,10 @@ function onIntent(intentRequest, session, context, callback) {
         getStormFact(intent, session, device, callback);
     } else if ("StormStrength" === intentName) {
 	getHurricaneStrength(intent, session, device, callback);
+    } else if ("TropicalStormStrength" === intentName) {
+        getTropicalStormStrength(intent, session, device, callback);
+    } else if ("DifferenceStorms" === intentName) {
+	getDifferenceStorms(intent, session, device, callback);
     } else if ("AMAZON.StartOverIntent" === intentName || "AMAZON.PreviousIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
@@ -368,6 +372,52 @@ function getHelpResponse(device, callback) {
 
     callback(sessionAttributes,
         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
+}
+
+// this is the function that describes the difference between a hurricane and tropical storm
+function getDifferenceStorms(intent, session, device, callback) {
+    var sessionAttributes = {};
+    var cardTitle = "Storm Strength";
+
+    console.log("Get difference betwen tropical storm and a hurricane requested.");
+
+    const speechOutput = "Peak wind speed is what differentiates storm types. " +
+	"A tropical storm has wind speeds ranging from 39 to 73 miles per hour. " +
+        "Anything at 74 miles per hour and above is classified as a hurricane. " +
+	"Hurricanes start off as tropical storms, and if conditions are favorable, " +
+	"the winds gain in strength and the storm grows into a hurricane. " +
+	"Weaker storms that have wind speeds below 39 miles per hour are called Tropical Depressions. " +
+        "If you would like to know about different strengths of hurricanes, just say something like, " +
+        "How strong are the winds on a category three hurricane?";
+    const cardOutput = "Tropical Storms have wind speed from 39 to 73 miles per hour.";
+
+    // if the user still does not respond, they will be prompted with this additional information
+    const repromptText = "Please tell me how I can help you by saying phrases like, " +
+        "list storm names or storm history.";
+
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, false));
+}
+
+// this is the function that handles describing a tropical storm
+function getTropicalStormStrength(intent, session, device, callback) {
+    var sessionAttributes = {};
+    var cardTitle = "Storm Strength";
+
+    console.log("Get Tropical Storm Strength requested.");
+
+    const speechOutput = "A tropical storm has wind speeds ranging from 39 to 73 miles per hour. " +
+	"Anything at 74 miles per hour and above is classified as a hurricane. " +
+	"If you would like to know about different strengths of hurricanes, just say something like, " +
+	"How strong are the winds on a category three hurricane?";
+    const cardOutput = "Tropical Storms have wind speed from 39 to 73 miles per hour.";
+
+    // if the user still does not respond, they will be prompted with this additional information
+    const repromptText = "Please tell me how I can help you by saying phrases like, " +
+        "list storm names or storm history.";
+
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, false));
 }
 
 // this is the function that handles how strong a hurricane winds are
