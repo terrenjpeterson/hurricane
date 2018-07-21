@@ -173,7 +173,9 @@ function onIntent(intentRequest, session, context, callback) {
     } else if ("GetStormDetail" === intentName) {
         getStormDetail(intent, session, device, callback);
     } else if ("GiveStormFact" === intentName || "AMAZON.MoreIntent" === intentName) {
-        getStormFact(intent, session, device, callback);        
+        getStormFact(intent, session, device, callback);
+    } else if ("StormStrength" === intentName) {
+	getHurricaneStrength(intent, session, device, callback);
     } else if ("AMAZON.StartOverIntent" === intentName || "AMAZON.PreviousIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
@@ -366,6 +368,52 @@ function getHelpResponse(device, callback) {
 
     callback(sessionAttributes,
         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
+}
+
+// this is the function that handles how strong a hurricane winds are
+function getHurricaneStrength(intent, session, device, callback) {
+    var sessionAttributes = {};
+    var cardTitle = "Storm Strength";
+
+    console.log("Get Hurricane Strength requested.");
+
+    var speechOutput = "A category x hurricane is y miles per hour.";
+
+    // check the slot data and provide a response accordingly
+    if (intent.slots.HurricaneStrength.value === "1") {
+	cardOutput = "A category one hurricane is between 74 and 95 miles per hour.";
+        speechOutput = "A category one hurricane is between 74 and 95 miles per hour. " +
+	    "What other information can I help you on? For example, ask me for a storm fact.";
+    } else if (intent.slots.HurricaneStrength.value === "2") {
+	cardOutput = "A category two hurricane is between 96 and 110 miles per hour.";
+        speechOutput = "A category two hurricane is between 96 and 110 miles per hour. " +
+            "What other information can I help you on? For example, ask me for a storm fact.";
+    } else if (intent.slots.HurricaneStrength.value === "3") {
+	cardOutput = "A category three hurricane is between 111 and 129 miles per hour.";
+        speechOutput = "A category three hurricane is between 111 and 129 miles per hour. " +
+            "What other information can I help you on? For example, ask me for a storm fact.";
+    } else if (intent.slots.HurricaneStrength.value === "4") {
+	cardOutput = "A category four hurricane is between 130 and 156 miles per hour.";
+        speechOutput = "A category four hurricane is between 130 and 156 miles per hour. " +
+            "What other information can I help you on? For example, ask me for a storm fact.";
+    } else if (intent.slots.HurricaneStrength.value === "5") {
+	cardOutput = "A category five hurricane is 157 miles per hour and above.";
+        speechOutput = "A category five hurricane is 157 miles per hour and above. " +
+            "What other information can I help you on? For example, ask me for a storm fact.";
+    } else {
+	console.log("Invalid hurricane level provided");
+	cardOutput = "The Saffir-Simpson Scale is a range from one to five.";
+        speechOutput = "Sorry, hurricanes are classified in a range from one to five. " +
+	    "Please provide me the hurricane strength by saying something like, " +
+	    "How strong are the winds on a category three hurricane?";
+    }
+
+    // if the user still does not respond, they will be prompted with this additional information
+    const repromptText = "Please tell me how I can help you by saying phrases like, " +
+        "list storm names or storm history.";
+
+    callback(sessionAttributes,
+        buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, false));
 }
 
 // this is the function that gets called to format the response when the user is done
