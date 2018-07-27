@@ -1162,9 +1162,11 @@ function getStormDetail(intent, session, device, callback) {
             speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
                 "say current storms. ";
         // new logic added on Sept 19th - trying to catch condition where people are looking for current storms.
-        } else if (stormName.toLowerCase() === "chris") {
+        } else if (stormName.toLowerCase() === "gilma") {
             console.log("New storm condition");
-            speechOutput = "Tropical Storm Chris is an active storm currently in the Atlantic Ocean. " +
+	    const currStormDetail = "Tropical Storm Gilma";
+	    const currStormOcean  = "Pacific";
+            speechOutput = currStormDetail + " is an active storm currently in the " + currStormOcean + " Ocean. " +
 		"For specifics on it's latest location as well as forecast details, please say, Current Storm Details.";
         } else {
             console.log("Storm name " + stormName + " did not exist in records. Respond back with message as such.")
