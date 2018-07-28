@@ -500,14 +500,46 @@ function setOceanInSession(intent, session, device, callback) {
 
     console.log("Setting ocean preference");
     console.log("preferred ocean : " + JSON.stringify(preferredOcean));
+    console.log("Session data: " + JSON.stringify(sessionAttributes));
 
     if ("Atlantic" == preferredOcean.value || "pacific" == preferredOcean.value) {
         var ocean = preferredOcean.value.charAt(0).toUpperCase() + preferredOcean.value.slice(1);
 
         sessionAttributes = storeOceanAttributes(ocean);
-        speechOutput = "Okay. My understanding is that you want information on the " + ocean + " ocean. " +
-            "Would you like to hear about this years storms, or storms from prior years?";
-        repromptText = "Here is the storm information for the " + ocean + " ocean.";
+
+	if (session.attributes.request === "GetStormNames") {
+            speechOutput = speechOutput + "The first five storm names for the " + ocean + " Ocean will be ";
+            if (ocean == "Atlantic")
+                currentYearStorms = atlanticStorms[0];
+            else
+                currentYearStorms = pacificStorms[0];
+
+            console.log("current year storms: " + JSON.stringify(currentYearStorms));
+
+            speechOutput = speechOutput +
+                currentYearStorms.stormNames[0] + ", " +
+                currentYearStorms.stormNames[1] + ", " +
+                currentYearStorms.stormNames[2] + ", " +
+                currentYearStorms.stormNames[3] + ", and " +
+                currentYearStorms.stormNames[4] + ". ";
+
+            cardOutput = ocean + " Ocean\n" +
+                currentYearStorms.stormNames[0] + "\n" +
+                currentYearStorms.stormNames[1] + "\n" +
+                currentYearStorms.stormNames[2] + "\n" +
+                currentYearStorms.stormNames[3] + "\n" +
+                currentYearStorms.stormNames[4] + "\n";
+
+            speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms.";
+
+            repromptText = "Would you like more information? If you would like a complete list of this years " +
+                "storms, say Complete list of this years storms. If you would like storm history from prior years " +
+                "please say Storm History.";
+	} else {
+            speechOutput = "Okay. My understanding is that you want information on the " + ocean + " ocean. " +
+                "Would you like to hear about this years storms, or storms from prior years?";
+            repromptText = "Here is the storm information for the " + ocean + " ocean.";
+	}
     } else {
         speechOutput = "I'm not sure which ocean you are looking for. Please try again by " +
             "saying Atlantic or Pacific.";
@@ -538,18 +570,44 @@ function getStormNames(intent, session, device, callback) {
 
     console.log("Get Storm Names");
 
+    // check session data to see if ocean preference has been set
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
     }
 
+    // if a preference has been set, read storm names - else prompt to provide which ocean
     if (oceanPreference) {
-        speechOutput = "Your ocean preference is " + oceanPreference + ". " +
-            "Please let me know what information I can provide, for example say " +
-            "List storm names.";
+        speechOutput = speechOutput + "The first five storm names for the " + oceanPreference + " Ocean will be ";
+        if (oceanPreference == "Atlantic")
+            currentYearStorms = atlanticStorms[0];
+        else
+            currentYearStorms = pacificStorms[0];
+
+        console.log("current year storms: " + JSON.stringify(currentYearStorms));
+
+        speechOutput = speechOutput +
+            currentYearStorms.stormNames[0] + ", " +
+            currentYearStorms.stormNames[1] + ", " +
+            currentYearStorms.stormNames[2] + ", " +
+            currentYearStorms.stormNames[3] + ", and " +
+            currentYearStorms.stormNames[4] + ". ";
+
+        cardOutput = oceanPreference + " Ocean\n" +
+            currentYearStorms.stormNames[0] + "\n" +
+            currentYearStorms.stormNames[1] + "\n" +
+            currentYearStorms.stormNames[2] + "\n" +
+            currentYearStorms.stormNames[3] + "\n" +
+            currentYearStorms.stormNames[4] + "\n";
+
+        speechOutput = speechOutput + "If you would like the complete list, say complete list of this years storms.";
+
+        repromptText = "Would you like more information? If you would like a complete list of this years " +
+            "storms, say Complete list of this years storms. If you would like storm history from prior years " +
+            "please say Storm History.";
+
         sessionAttributes = storeOceanAttributes(oceanPreference);
-        repromptText = "What would you like me to read you this years storms? If so, " +
-            "please say List storm names.";
     } else {
+	sessionAttributes.request = "GetStormNames";
         speechOutput = "Which ocean would you like details for, please say, Atlantic Ocean or Pacific Ocean";
         repromptText = "Please let me know which ocean you would like details " +
             "by saying Atlantic Ocean or Pacific Ocean";
