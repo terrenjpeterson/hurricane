@@ -142,6 +142,7 @@ function onIntent(intentRequest, session, context, callback) {
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
         country = intentRequest.locale;        
+	dialogState = intentRequest.dialogState;
 
     // Dispatch to the individual skill handlers
     if ("ListStormNames" === intentName) {
@@ -169,6 +170,8 @@ function onIntent(intentRequest, session, context, callback) {
         getTropicalStormStrength(intent, session, device, callback);
     } else if ("DifferenceStorms" === intentName) {
 	getDifferenceStorms(intent, session, device, callback);
+    } else if ("StormDistance" === intentName) {
+	getStormDistance(intent, dialogState, session, device, callback);
     } else if ("AMAZON.StartOverIntent" === intentName || "AMAZON.PreviousIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.HelpIntent" === intentName) {
@@ -343,6 +346,9 @@ function handleCanFulfillRequest(intentRequest, session, callback) {
     } else if ("DifferenceStorms" === intentName) {
         callback(sessionAttributes,
             buildFulfillQueryResponse("YES", null));
+    } else if ("StormDistance" === intentName) {
+        callback(sessionAttributes,
+            buildFulfillQueryResponse("YES", buildSlotDetail("StormDistance", intentRequest.intent.slots)));
     } else {
 	// this handles all the other scenarios - i.e. Scroll Down Intent - that make no sense
 	console.log("No match on intent name: " + intentName);
@@ -395,6 +401,74 @@ function getDifferenceStorms(intent, session, device, callback) {
 
     callback(sessionAttributes,
         buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, false));
+}
+
+// this is the function that handles describing how far away a particular storm is from a location
+function getStormDistance(intent, dialogState, session, device, callback) {
+    var sessionAttributes = {};
+
+    console.log("Get location question for a hurricane or tropical storm.");
+
+    var cardTitle = "Storm Distance";
+    var speechOutput = "";
+
+    // this will change based on the current storm
+    const currStormName = "hector";
+    const currStormStatus = "Hurricane";
+
+    // if the user still does not respond, they will be prompted with this additional information
+    const repromptText = "Please tell me how I can help you by saying phrases like, " +
+        "list storm names or storm history.";
+
+    if (intent.slots.Storm.value) {
+    	if (intent.slots.Storm.value.toLowerCase() === currStormName) {
+    	    // check current data to see if there are active storms and if so change the welcome message
+	    console.log("Checking on status for Hurricane Hector");
+    	    var s3 = new aws.S3();
+
+    	    var getParams = {Bucket : stormDataBucket, Key : 'currStorms.json'};
+
+    	    s3.getObject(getParams, function(err, data) {
+		console.log("retrieving S3 object.");
+        	if(err) {
+            	    console.log('Error getting history data : ' + err);
+		    speeechOutput = "Sorry, I'm having trouble accessing storm data right now.";
+		    callback(sessionAttributes,
+        		buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, false));
+                } else {
+            	    var returnData = eval('(' + data.Body + ')');
+
+            	    // sucessfully returned s3 object - now see if there are active storms
+            	    if (returnData[0].activeStorms === false) {
+                    	console.log('data retrieved - no active storms');
+		    	speechOutput = "Sorry, Hurricane Hector is no longer active in the Pacific Ocean."; 
+           	    } else {
+                    	console.log('there is an active storm: ' + JSON.stringify(returnData[0].storms));
+		    	var storms = returnData[0].storms;
+		    	console.log('storm location: ' + JSON.stringify(storms[0].location));
+			var locationData = storms[0].location; 
+
+            	    	speechOutput = storms[0].stormType + " " + storms[0].stormName + " is " + locationData.distance +
+			    " miles from " + locationData.name + ". ";
+			speechOutput = speechOutput + "Would you like the complete forecast for " +
+			    storms[0].stormType + " " + storms[0].stormName + "?";
+		    }
+		    callback(sessionAttributes,
+        		buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, false));
+		}
+	    });
+    	} else {
+	    speechOutput = "Sorry, " + intent.slots.Storm.value + " is not currently an active storm. " +
+	        "If you would like information on Hurricane Hector, please let me know.";
+    	    callback(sessionAttributes,
+        	buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, false));
+	}
+    } else {
+	speechOutput = "Which storm are you trying to find details on? If you would like information " +
+	    "on Hurricane Hector, please let me know.";
+    	callback(sessionAttributes,
+            buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, false));
+    }
 }
 
 // this is the function that handles describing a tropical storm
@@ -1477,6 +1551,19 @@ function buildFulfillQueryResponse(canFulfill, slotInfo) {
     }
 }
 
+// this builds the correct directive when a validation is in-progress
+function buildValidationResponse(sessionAtributes) {
+    console.log("build validation response");
+
+    return {
+	version: "1.0",
+	response: {
+	    shouldEndSession: true
+	},
+	sessionAttributes: sessionAttributes
+    }
+}
+
 // this validates information coming in from slots and manufactures the correct responses
 function buildSlotDetail(slotName, slots) {
     console.log("build slot detail");
@@ -1505,6 +1592,69 @@ function buildSlotDetail(slotName, slots) {
                     "canFulfill": "NO"
                 }
             };
+	}
+    } else if (slotName === "StormDistance") {
+	if (slots.Storm.value) {
+	    if (slots.Storm.value.toLowerCase() === "hector") {
+		if (slots.Location.value) {
+                    return {
+                        "Storm": {
+                            "canUnderstand": "YES",
+                            "canFulfill": "YES"
+                        },
+                        "Location": {
+                            "canUnderstand": "YES",
+                            "canFulfill": "YES"
+                        }
+		    }
+                } else {
+                    return {
+                        "Storm": {
+                            "canUnderstand": "YES",
+                            "canFulfill": "YES"
+                        },
+                        "Location": {
+                            "canUnderstand": "NO",
+                            "canFulfill": "NO"
+                        }
+                    }
+		}
+	    } else {
+                return {
+                    "Storm": {
+                        "canUnderstand": "YES",
+                        "canFulfill": "NO"
+                    },
+                    "Location": {
+                        "canUnderstand": "NO",
+                        "canFulfill": "NO"
+                    }
+                } 
+	    }
+	} else {
+	    if (slots.Location.value) {
+		return {
+		    "Storm": {
+                        "canUnderstand": "NO",
+                        "canFulfill": "NO"
+                    },
+		    "Location": {
+                    	"canUnderstand": "YES",
+                    	"canFulfill": "NO"
+		    }
+		}
+	    } else {
+                return {
+                    "Storm": {
+                        "canUnderstand": "NO",
+                        "canFulfill": "NO"
+                    },
+                    "Location": {
+                        "canUnderstand": "NO",
+                        "canFulfill": "NO"
+                    }
+                }  
+	    }
 	}
     } else if (slotName === "Storm") {
 	// validate that the storm name is in the available list of names
