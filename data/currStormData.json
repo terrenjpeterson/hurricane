@@ -2,6 +2,8 @@
             {"stormName":"Alberto", "ocean":"Atlantic", "level":"Tropical Storm"},
             {"stormName":"Beryl", "ocean":"Atlantic", "level":"Hurricane"},
             {"stormName":"Chris", "ocean":"Atlantic", "level":"Hurricane"},
+            {"stormName":"Debby", "ocean":"Atlantic", "level":"Tropical Storm"},
+            {"stormName":"Ernesto", "ocean":"Atlantic", "level":"Tropical Storm"},
             {"stormName":"Aletta", "ocean":"Pacific", "level":"Hurricane"},
             {"stormName":"Bud", "ocean":"Pacific", "level":"Hurricane"},
             {"stormName":"Carlotta", "ocean":"Pacific", "level":"Tropical Storm"},
@@ -12,5 +14,8 @@
             {"stormName":"Hector", "ocean":"Pacific", "level":"Hurricane"},
             {"stormName":"Ileana", "ocean":"Pacific", "level":"Tropical Storm"},
             {"stormName":"John", "ocean":"Pacific", "level":"Hurricane"},
-            {"stormName":"Kristy", "ocean":"Pacific", "level":"Tropical Storm"}
+            {"stormName":"Kristy", "ocean":"Pacific", "level":"Tropical Storm"},
+            {"stormName":"Lane", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Miriam", "ocean":"Pacific", "level":"Hurricane"},
+            {"stormName":"Norman", "ocean":"Pacific", "level":"Hurricane"}
 ]
