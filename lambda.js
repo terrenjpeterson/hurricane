@@ -263,12 +263,12 @@ function getWelcomeResponse(session, device, callback) {
                         console.log("Current Location: " + currentStormLoc[0]);
                         speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0];
                     } else if (activeStorms === 2) {
-                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + " " +
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + ". " +
                             activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + " ";
                     } else if (activeStorms === 3) {
-                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] +
+                        speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + ". " +
                             activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + ". " +
-                            activeStormNames[2] + " is currently active, approximately " + currentStormLoc[2]; 
+                            activeStormNames[2] + " is currently active, approximately " + currentStormLoc[2] + ". "; 
                     } else {
                         speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Atlantic Ocean. ";
                     }
@@ -1071,8 +1071,9 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
             if (storms[i].landfall === true && storms[i].tropStormWarning === true)    
                 speechOutput = speechOutput + "Looking ahead, tropical storm conditions are expected to first reach " +
                     storms[i].landfallPredict + ". ";
-                        
-            speechOutput = speechOutput + storms[i].hazards.rainfall + ". " + storms[i].hazards.stormSurge;
+
+	    if (storms[i].hazards.rainfall != null)
+                speechOutput = speechOutput + storms[i].hazards.rainfall + ". " + storms[i].hazards.stormSurge;
 
             if (storms[i].hazards.surf != null)
                 speechOutput = speechOutput + "This system is expected to produce " + storms[i].hazards.surf + ". ";
@@ -1209,6 +1210,12 @@ function getStormDetail(intent, session, device, callback) {
                 stormName = stormName.slice(0,(stormName.length - 1));;
             }
 
+	    // temp code to fix common mispelling of tropical storm garden
+    	    if (stormName.toLowerCase() === "garden") {
+        	console.log("Corrected interpretation of Garden to Gordon");
+        	stormName = "gordon";
+    	    }
+
             if (stormDetailAvail[i].stormName.toLowerCase() == stormName.toLowerCase()) {
                 stormDetailExists = true;
                 var ocean = stormDetailAvail[i].ocean;
@@ -1302,27 +1309,73 @@ function getStormDetail(intent, session, device, callback) {
             console.log("No storm name provided - redirect with a response message.")
             speechOutput = "Please provide a storm name to hear details. To check on active storms, " +
                 "say current storms. ";
+
+            cardOutput = speechOutput;
+
+            var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
+                "the storm name. If you want me to check on any current storms, please say current storms.";
+
+            callback(sessionAttributes,
+                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession))
+
         // new logic added to catch condition where people are looking for current storms.
-        } else if (stormName.toLowerCase() === "hector") {
-            console.log("New storm condition");
-	    const currStormDetail = "Hurricane Hector";
-	    const currStormOcean  = "Pacific";
-            speechOutput = currStormDetail + " is an active storm currently in the " + currStormOcean + " Ocean. " +
-		"Would you like specifics on it's latest forecast?";
+        } else if (stormName.toLowerCase() === "florence" || stormName.toLowerCase() === "gordon") {
+            console.log("New storm condition - read lastest from nhc");
+
+            // retrieve current storm information about one of these active storms
+            var s3 = new aws.S3();
+
+            var getParams = {Bucket : stormDataBucket,
+                            Key : 'currStorms.json'};
+
+            s3.getObject(getParams, function(err, data) {
+                if(err)
+                    console.log('Error getting history data : ' + err);
+                else {
+                    var returnData = eval('(' + data.Body + ')');
+                    //
+                    if (returnData[0].activeStorms === false) {
+                        console.log('welcome message - no active storms');
+                    } else {
+                        // parse through the array and build an appropriate message for that specific storm
+                        var storms = returnData[0].storms;
+                        // rotate through the array of current storm data to determine where the active storms are
+                        for (i = 0; i < storms.length; i++) {
+                            console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
+			    if (returnData[0].storms[i].stormName.toLowerCase() === stormName.toLowerCase()) {
+				const stormMatch = returnData[0].storms[i];
+                            	speechOutput =  stormMatch.stormType + " " + stormMatch.stormName +
+				    " is an active storm currently in the " + stormMatch.ocean + " Ocean. " +
+				    "It is currently located " + stormMatch.location.proximity + ", and headed " +
+				    stormMatch.movement.direction + " at " + stormMatch.movement.speed + " miles per hour. " +
+                                    "Would you like complete details on it's latest forecast?";
+			    }
+			}
+
+                        cardOutput = speechOutput;
+
+            		var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
+                	    "the storm name. If you want me to check on any current storms, please say current storms.";
+
+  	              	callback(sessionAttributes,
+            		    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession))
+                    }
+                }
+            });
         } else {
             console.log("Storm name " + stormName + " did not exist in records. Respond back with message as such.")
             speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
                 "Please provide a different storm name that you would like information on. For example, " +
                 "say, Tell me about Hurricane Katrina.";
-        }
     
-        cardOutput = speechOutput;
+            cardOutput = speechOutput;
     
-        var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
-            "the storm name. If you want me to check on any current storms, please say current storms.";
+            var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
+                "the storm name. If you want me to check on any current storms, please say current storms.";
     
-        callback(sessionAttributes,
-             buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
+            callback(sessionAttributes,
+                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
+	}
     }
 }
 
@@ -1664,6 +1717,11 @@ function buildSlotDetail(slotName, slots) {
                 if (stormDetailAvail[i].stormName.toLowerCase() == slots.Storm.value.toLowerCase()) {
                     stormDetailExists = true;
                 }
+		// this is a common language problem with 'TS Gordon'
+		if (slots.Storm.value.toLowerCase() === "garden") {
+		    console.log("Mispelling of TS Gordon as Garden");
+		    stormDetailExists = true;
+		}
 	    }
 	} else {
 	    console.log("No storm name provided");
