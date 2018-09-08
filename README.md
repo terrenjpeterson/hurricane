@@ -60,12 +60,14 @@ There are also a set of helper functions within the framework that package the j
 
 ## Storm Data from NHC
 
-The hurricane data comes from the National Hurricane Center [website](https://https://www.nhc.noaa.gov/).
-Each time a new tropical storm becomes active, the NHC creates a webpage with a public advisory.
+The hurricane data comes from the National Hurricane Center [website](https://www.nhc.noaa.gov/). This data is available via RSS feed, but I'm not aware of any API call that publishes this detail.
+Each time a new tropical storm becomes active, the NHC creates an html webpage with a public advisory.
 A lambda function gets created based on the [nhcDataGather.js](https://github.com/terrenjpeterson/hurricane/blob/master/nhcDataGather.js) template that makes a https request to gather that page, then parse through it to convert the human readable version into a valid json object.
 That object is then updated in an S3 bucket that is accessible by the skill.
 A cloudwatch event is created that triggers the lambda function every fifteen minutes, thus keeping the data current.
 The lambda function for the Alexa skill (lambda.js) is straight forward, and just reads the s3 object to gather the data.
+
+The NHC updates storm forecasts either every three or six hours. The exact timing of when the content is published varies, but is normally ten minutes before the hour, with the main six hour updates at 5AM, 11AM, 5PM, 11PM ET.
 
 ## Visual Rendering for Echo Show
 
