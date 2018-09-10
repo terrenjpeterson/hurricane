@@ -61,8 +61,10 @@ There are also a set of helper functions within the framework that package the j
 ## Storm Data from NHC
 
 The hurricane data comes from the National Hurricane Center [website](https://www.nhc.noaa.gov/). This data is available via RSS feed, but I'm not aware of any API call that publishes this detail.
-Each time a new tropical storm becomes active, the NHC creates an html webpage with a public advisory.
-<img src="https://s3.amazonaws.com/hurricane-data/images/sampleNHCdata.png" width="256" height="256">
+Each time a new tropical storm becomes active, the NHC creates an html webpage with a public advisory including the data about the storm. The data formatting is very old school, almost like a ticker tape.
+
+<img src="https://s3.amazonaws.com/hurricane-data/images/sampleNHCdata.png" width="400">
+
 A lambda function gets created based on the [nhcDataGather.js](https://github.com/terrenjpeterson/hurricane/blob/master/nhcDataGather.js) template that makes a https request to gather that page, then parse through it to convert the human readable version into a valid json object.
 That object is then updated in an S3 bucket that is accessible by the skill.
 A cloudwatch event is created that triggers the lambda function every fifteen minutes, thus keeping the data current.
