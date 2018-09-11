@@ -60,7 +60,7 @@ exports.handler = function (event, context) {
                     context.succeed(buildResponse(sessionAttributes, speechletResponse));
                 });
         } else if (event.request.type === "SessionEndedRequest") {
-            console.log("session ended request received");
+            console.log("Session Ended: " + JSON.stringify(event.request));
             onSessionEnded(event.request, event.session);
             context.succeed();
 	// this was added to handle the Can Fulfill Intent Request feature
@@ -179,9 +179,9 @@ function onIntent(intentRequest, session, context, callback) {
     } else if ("AMAZON.RepeatIntent" === intentName || "AMAZON.NextIntent" === intentName) {
         getWelcomeResponse(session, device, callback);
     } else if ("AMAZON.CancelIntent" === intentName || "AMAZON.NoIntent" === intentName) {
-        handleSessionEndRequest(device, callback);
+        handleSessionEndRequest(session, device, callback);
     } else if ("AMAZON.StopIntent" === intentName) {
-	handleSessionStopRequest(device, callback);
+	handleSessionStopRequest(session, device, callback);
     } else {
         throw "Invalid intent";
     }
@@ -201,6 +201,7 @@ function onSessionEnded(sessionEndedRequest, session) {
 // this is the function that gets called to format the response to the user when they first boot the app
 function getWelcomeResponse(session, device, callback) {
     var sessionAttributes = {};
+	sessionAttributes.lastRequest = "Welcome";
     var shouldEndSession = false;
     var cardTitle = "Welcome to Hurricane Center";
 
@@ -242,7 +243,7 @@ function getWelcomeResponse(session, device, callback) {
                 var currentStormLoc = [];
                 // rotate through the array of current storm data to determine where the active storms are
                 for (i = 0; i < storms.length; i++) {
-                    console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
+                    //console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
                     if (storms[i].formed) {
                         activeStormNames.push(returnData[0].storms[i].stormType + " " + returnData[0].storms[i].stormName);
                         activeStorms++;
@@ -272,6 +273,7 @@ function getWelcomeResponse(session, device, callback) {
                     } else {
                         speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Atlantic Ocean. ";
                     }
+		    cardOutput = speechOutput;
                 } else if (activeStormAtlantic === false && activeStormPacific === true) {
                     if (activeStorms === 1) {
                         speechOutput = speechOutput + activeStormNames[0] + " is currently active in the Pacific Ocean. ";
@@ -281,22 +283,27 @@ function getWelcomeResponse(session, device, callback) {
                     } else {
                         speechOutput = speechOutput + "There are currently " + activeStorms + " storms active in the Pacific Ocean. ";
                     }
+		    cardOutput = speechOutput;
                 } else if (activeStormAtlantic === true && activeStormPacific === true) {
                     if (activeStorms === 2) {
                         speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + ". " +
                             activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + ".";
+			cardOutput = speechOutput;
                     } else if (activeStorms === 3) {
                         speechOutput = speechOutput + activeStormNames[0] + " is currently active, approximately " + currentStormLoc[0] + ". " +
                             activeStormNames[1] + " is currently active, approximately " + currentStormLoc[1] + ". " +
                             activeStormNames[2] + " is currently active, approximately " + currentStormLoc[2]; 
+			cardOutput = speechOutput;
                     } else {
                         speechOutput = speechOutput + "There are " + activeStorms + " active storms, including " + 
-			activeStormNames[0] + " and " + activeStormNames[4] + " in the Atlantic, and " + 
+			activeStormNames[0] + " and " + activeStormNames[1] + " in the Atlantic, and " + 
 			activeStormNames[2] + " in the Pacific. ";
+			cardOutput = "Current Storms\n";
+			for (var k = 0; k < activeStormNames.length; k++) {
+			    cardOutput = cardOutput + activeStormNames[k] + " " + currentStormLoc[k] + "\n";
+			}
                     }
                 }
-                //speechOutput = speechOutput + "<break time=\"1s\"/>";
-                cardOutput = speechOutput;
                 speechOutput = speechOutput + "Please say something like, tell me about Florence, to hear the forecast on a single storm. " +
 		    "Or say yes to hear them all.";
                 repromptText = "There are currently active tropical storms. To hear specific forecast details about them, just say yes.";
@@ -542,7 +549,7 @@ function getHurricaneStrength(intent, session, device, callback) {
 }
 
 // this is the function that gets called to format the response when the user is done
-function handleSessionEndRequest(device, callback) {
+function handleSessionEndRequest(session, device, callback) {
     var cardTitle = "Thanks for using Hurricane Center";
     var speechOutput = "Thank you for using Hurricane Center. ";
         //"If this skill was useful, please " +
@@ -550,20 +557,36 @@ function handleSessionEndRequest(device, callback) {
     // Setting this to true ends the session and exits the skill.
     var shouldEndSession = true;
 
+    console.log("Prior Intent:" + JSON.stringify(session.attributes));
+    console.log("User Terminated Session");
+
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, null, device, shouldEndSession));
 }
 
 // this is the function that gets called to format the response when the user requests stop
-function handleSessionStopRequest(device, callback) {
+function handleSessionStopRequest(session, device, callback) {
+    var sessionAttributes = {};
+    	sessionAttributes.lastRequest = "Stop";
     const cardTitle = "Thanks for using Hurricane Center";
-    const speechOutput = "Okay, is there any other information I can provide you about tropical storms? " +
+    var speechOutput = "Okay, is there any other information I can provide you about tropical storms? " +
 	"For example, you can say, tell me a storm fact.";
     const repromptText = "What other information would you like on tropical storms? For example, you can " +
 	"say, What are the storms for this year?";
 
-    const shouldEndSession = false;
+    let shouldEndSession = false;
 
-    callback({}, buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
+    console.log("Prior Intent:" + JSON.stringify(session.attributes));
+
+    if (session.attributes) {
+	if (session.attributes.lastRequest === "Stop") {
+	    shouldEndSession = true;
+	    console.log("User Requested Stopping Twice. End Session.");
+	    speechOutput = "Thanks for using Hurricane Center.";
+	}
+    }
+
+    callback(sessionAttributes, 
+	buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
 // Sets the ocean in the session and prepares the speech to reply to the user.
@@ -1007,6 +1030,7 @@ function getThisYearStorm(intent, session, device, callback) {
 // this function prepares the response on active storms
 function replyActiveStorms(storms, returnData, intent, session, device, callback) {
     var sessionAttributes = {};
+        sessionAttributes.lastRequest = "ActiveStorms";
     var cardOutput = "";
     var cardTitle = "Storm Information for 2018";
     var activeStorms = [];
@@ -1014,6 +1038,7 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
         sessionAttributes = storeOceanAttributes(oceanPreference);
+	sessionAttributes.lastRequest = "ActiveStorms";
     }
 
     // parse through the array and build an appropriate welcome message
@@ -1193,6 +1218,7 @@ function getCompleteList(intent, session, device, callback) {
 function getStormDetail(intent, session, device, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
+        sessionAttributes.lastRequest = "StormDetail";
     var cardTitle = "Storm Details";
     var cardOutput = "";
     var repromptText = "";
@@ -1204,7 +1230,7 @@ function getStormDetail(intent, session, device, callback) {
 
     console.log("Providing detail on storm name: " + stormName);
     
-    // attempt to find a match of the storm name provided in the slot
+    // attempt to find a match of a historical storm name provided in the slot
     for (i = 0; i < stormDetailAvail.length ; i++) {
         if (stormName != null) {
 	    // check if period was added to end of storm name
@@ -1212,13 +1238,7 @@ function getStormDetail(intent, session, device, callback) {
                 console.log("Removed extra period from slot name.");
                 stormName = stormName.slice(0,(stormName.length - 1));;
             }
-
-	    // temp code to fix common mispelling of tropical storm garden
-    	    if (stormName.toLowerCase() === "garden") {
-        	console.log("Corrected interpretation of Garden to Gordon");
-        	stormName = "gordon";
-    	    }
-
+	    // if a match is found, set the appropriate flag indicating as such
             if (stormDetailAvail[i].stormName.toLowerCase() == stormName.toLowerCase()) {
                 stormDetailExists = true;
                 var ocean = stormDetailAvail[i].ocean;
@@ -1226,6 +1246,7 @@ function getStormDetail(intent, session, device, callback) {
 	}
     }
 
+    // if a historical storm name (i.e. Katrina, Andrew, etc.) was found, read back details on it
     if (stormDetailExists) {
         var speechOutput = "Getting detail on storm " + stormName;
 
@@ -1323,7 +1344,8 @@ function getStormDetail(intent, session, device, callback) {
 
         // new logic added to catch condition where people are looking for current storms.
         } else if (stormName.toLowerCase() === "florence" || stormName.toLowerCase() === "olivia" ||
-		   stormName.toLowerCase() === "helene" || stormName === "9") { 
+		   stormName.toLowerCase() === "helene" || stormName.toLowerCase() === "isaac" ||
+		   stormName.toLowerCase() === "paul" ) { 
             console.log("New storm condition - read lastest from nhc");
 
             // retrieve current storm information about one of these active storms
@@ -1337,9 +1359,22 @@ function getStormDetail(intent, session, device, callback) {
                     console.log('Error getting history data : ' + err);
                 else {
                     var returnData = eval('(' + data.Body + ')');
-                    //
+                    // this is processed in case the storm name didn't match an active one or a historical one
                     if (returnData[0].activeStorms === false) {
+
                         console.log('welcome message - no active storms');
+	            	speechOutput = "I'm sorry, I don't have any details about " + stormName + ". " +
+	                    "Please provide a different storm name that you would like information on. For example, " +
+	                    "say, Tell me about Hurricane Katrina.";
+
+	            	cardOutput = speechOutput;
+
+	                var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
+	                    "the storm name. If you want me to check on any current storms, please say current storms.";
+
+	            	callback(sessionAttributes,
+	                    buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
+	
                     } else {
                         // parse through the array and build an appropriate message for that specific storm
                         var storms = returnData[0].storms;
@@ -1349,24 +1384,42 @@ function getStormDetail(intent, session, device, callback) {
 				// match found with current storm data - now create the output
                             	console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
 				const stormMatch = returnData[0].storms[i];
-                            	speechOutput =  stormMatch.stormType + " " + stormMatch.stormName +
+				speechOutput = "This forecast comes from the National Hurricane Center and is updated " +
+				    "every three to six hours. " +
+                            	    stormMatch.stormType + " " + stormMatch.stormName +
 				    " is an active storm currently in the " + stormMatch.ocean + " Ocean. " +
+				    stormMatch.stormName + " is currently generating winds of " + stormMatch.peakWinds + " miles per hour. " +
 				    "It is located " + stormMatch.location.proximity + ", and headed " +
 				    stormMatch.movement.direction + " at " + stormMatch.movement.speed + " miles per hour. " +
-				    "As of " + returnData[0].latestUpdate + ", " +
-				    "the forecast is for this motion to " + stormMatch.movement.forecast;
+				    "The forecast is for this motion to " + stormMatch.movement.forecast;
+				cardOutput = "National Hurricane Center Forecast\n" +
+				    "As of: " + returnData[0].latestUpdate + "\n" +
+				    stormMatch.stormType + " " + stormMatch.stormName + "\n" +
+				    "Location: " + stormMatch.location.proximity + "\n" +
+				    "Coordinates: " + stormMatch.location.lat + " " + stormMatch.location.long + "\n" +
+				    "Movement: " + stormMatch.movement.direction + " at " + stormMatch.movement.speed + " mph\n" +
+				    "Peak Winds: " + stormMatch.peakWinds + " mph\n" +
+				    "Pressure: " + stormMatch.pressure + " mb\n";
 				// these are variable conditions
 				if (stormMatch.tropStormWarning) {
 				    speechOutput = speechOutput + "A tropical storm warning is in effect for " + stormMatch.tropStormLocation;
+				    cardOutput = cardOutput + "Tropical Warning: " + stormMatch.tropStormLocation + "\n";
 				}
+				if (stormMatch.hurricaneWarning) {
+				    speechOutput = speechOutput + "A hurricane warning is in effect for " + stormMatch.tropStormLocation;
+				    cardOutput = cardOutput + "Hurricane Warning: " + stormMatch.tropStormLocation + "\n";
+				}
+				if (stormMatch.hurricaneWatch) {
+				    speechOutput = speechOutput + "A hurricane watch is in effect for " + stormMatch.hurrWatchLocation;
+				    cardOutput = cardOutput + "Hurricane Watch: " + stormMatch.hurrWatchLocation + "\n";
+			        }
 				if (stormMatch.hazards.wind != null) {
 				    speechOutput = speechOutput + stormMatch.hazards.wind;
+				    cardOutput = cardOutput + "Wind Forecast: " + stormMatch.hazards.wind + "\n";
 				}
 				speechOutput = speechOutput + " Would you like complete forecast details on all of the active tropical storms?";
 			    }
 			}
-
-                        cardOutput = speechOutput;
 
             		var repromptText = "Would you like to hear about specific storms? If so, please respond with " +
                 	    "the storm name. If you want me to check on any current storms, please say current storms.";
@@ -1397,11 +1450,14 @@ function getStormDetail(intent, session, device, callback) {
 function getStormFact(intent, session, device, callback) {
     var shouldEndSession = false;
     var sessionAttributes = {};
+        sessionAttributes.lastRequest = "StormFact";
     var cardTitle = "Storm Facts";
-    var repromptText = "If you would like another tropical storm fact, please say give me a storm fact.";
+    const repromptText = "If you would like another tropical storm fact, please say give me a storm fact.";
 
     const factIndex = Math.floor(Math.random() * stormFacts.length);
     const randomFact = stormFacts[factIndex].stormFact;
+
+    console.log("Provided Storm Fact: " + randomFact);
 
     var speechOutput = "Here is your tropical storm fact. " + randomFact + " If you would like to hear another fact, please " +
         "say something like Give me a storm fact.";
@@ -1739,8 +1795,12 @@ function buildSlotDetail(slotName, slots) {
 		}
 	    }
 	    // this checks for current storm names
-	    if (slots.Storm.value.toLowerCase() === "helene" || slots.Storm.value.toLowerCase() === 'florence') {
-		console.log("Can Fulfill Reqest for current storm");
+	    if (slots.Storm.value.toLowerCase() === "helene" || 
+		slots.Storm.value.toLowerCase() === 'florence' ||
+	 	slots.Storm.value.toLowerCase() === 'paul' ||
+		slots.Storm.value.toLowerCase() === 'olivia' ||
+		slots.Storm.value.toLowerCase() === 'isaac') {
+		console.log("Can Fulfill Reqest for current storm " + slots.Storm.value);
 		stormDetailExists = true;
 	    }
 	} else {
