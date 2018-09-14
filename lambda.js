@@ -232,6 +232,7 @@ function getWelcomeResponse(session, device, callback) {
                 console.log('welcome message - no active storms');
             } else {
                 console.log('there is an active storm: ' + JSON.stringify(returnData[0].storms));
+		var activeStormData = [];
                 // parse through the array and build an appropriate welcome message
                 speechOutput = "Welcome to the Hurricane Center. ";
                 var storms = returnData[0].storms;
@@ -253,6 +254,17 @@ function getWelcomeResponse(session, device, callback) {
                             activeStormAtlantic = true;
                         else
                             activeStormPacific = true;
+
+			var activeStormDetail = {};
+                            activeStormDetail.stormType    = returnData[0].storms[i].stormType;
+                            activeStormDetail.stormName    = returnData[0].storms[i].stormName;
+                            activeStormDetail.ocean        = returnData[0].storms[i].ocean;
+                            activeStormDetail.locationLat  = returnData[0].storms[i].location.lat;
+                            activeStormDetail.locationLong = returnData[0].storms[i].location.long;
+                            activeStormDetail.peakWinds    = returnData[0].storms[i].peakWinds;
+                            activeStormDetail.pressure     = returnData[0].storms[i].pressure;
+
+                        activeStormData.push(activeStormDetail);
                     }
                 }
                 console.log("total number of storms: " + activeStorms);
@@ -310,8 +322,14 @@ function getWelcomeResponse(session, device, callback) {
             }
         }
 
+	if (device.type === "Legacy") { 
 	    callback(sessionAttributes,
-                buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
+            	buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
+	} else {
+	    console.log("Rendering for Echo Show - Active Storms: " + JSON.stringify(activeStorms));
+            callback(sessionAttributes,
+            	buildVisualListResponse(cardTitle, speechOutput, cardOutput, repromptText, activeStormData, shouldEndSession));
+    	}
     });
 }
 
