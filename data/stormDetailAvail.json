@@ -5,7 +5,6 @@
             {"stormName":"Irene", "ocean":"Atlantic", "stormYear":2011},
             {"stormName":"Ike", "ocean":"Atlantic", "stormYear":2008},
             {"stormName":"Gonzalo", "ocean":"Atlantic", "stormYear":2014},
-            {"stormName":"Isaac", "ocean":"Atlantic", "stormYear":2012},
             {"stormName":"Alex", "ocean":"Atlantic", "stormYear":2010},
             {"stormName":"Karl", "ocean":"Atlantic", "stormYear":2010},
             {"stormName":"Dean", "ocean":"Atlantic", "stormYear":2007},
@@ -27,6 +26,7 @@
             {"stormName":"Otto", "ocean":"Atlantic", "stormYear":2016},
             {"stormName":"Harvey", "ocean":"Atlantic", "stormYear":2017},
             {"stormName":"Irma", "ocean":"Atlantic", "stormYear":2017},
-            {"stormName":"Maria", "ocean":"Atlantic", "stormYear":2017}
+            {"stormName":"Maria", "ocean":"Atlantic", "stormYear":2017},
+	    {"stormName":"Florence", "ocean":"Atlantic", "stormYear":2018 }
 ]
 
