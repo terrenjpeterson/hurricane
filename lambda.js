@@ -213,6 +213,7 @@ function getWelcomeResponse(session, device, callback) {
     var repromptText = "Please tell me how I can help you by saying phrases like, " +
         "list storm names or storm history for 2013.";
     var activeStorms = false;
+    var activeStormData = [];
 
     console.log("Get Welcome Message - Device Type: " + JSON.stringify(device.type));
     
@@ -232,16 +233,15 @@ function getWelcomeResponse(session, device, callback) {
                 console.log('welcome message - no active storms');
             } else {
                 console.log('there is an active storm: ' + JSON.stringify(returnData[0].storms));
-		var activeStormData = [];
                 // parse through the array and build an appropriate welcome message
                 speechOutput = "Welcome to the Hurricane Center. ";
                 var storms = returnData[0].storms;
                 var activeStormAtlantic = false;
                 var activeStormPacific = false;
                 var activeStorms = 0;
-                var activeStormNames = [];
                 var currentStormLocation = "";
                 var currentStormLoc = [];
+		var activeStormNames = []
                 // rotate through the array of current storm data to determine where the active storms are
                 for (i = 0; i < storms.length; i++) {
                     //console.log('storm data: ' + JSON.stringify(returnData[0].storms[i]));
@@ -308,21 +308,21 @@ function getWelcomeResponse(session, device, callback) {
 			cardOutput = speechOutput;
                     } else {
                         speechOutput = speechOutput + "There are " + activeStorms + " active storms, including " + 
-			activeStormNames[0] + " and " + activeStormNames[1] + " in the Atlantic, and " + 
-			activeStormNames[2] + " in the Pacific. ";
+			activeStormNames[0] + " and " + activeStormNames[1] + ". ";
 			cardOutput = "Current Storms\n";
 			for (var k = 0; k < activeStormNames.length; k++) {
 			    cardOutput = cardOutput + activeStormNames[k] + " " + currentStormLoc[k] + "\n";
 			}
                     }
                 }
-                speechOutput = speechOutput + "Please say something like, tell me about Florence, to hear the forecast on a single storm. " +
+                speechOutput = speechOutput + "Please say something like, tell me about " + activeStormNames[0] + ", to hear the forecast on a single storm. " +
 		    "Or say yes to hear them all.";
                 repromptText = "There are currently active tropical storms. To hear specific forecast details about them, just say yes.";
             }
         }
 
-	if (device.type === "Legacy") { 
+	//if (device.type === "Legacy") {
+	if (device.type === "Legacy" || activeStormData.length === 0) { 
 	    callback(sessionAttributes,
             	buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession));
 	} else {
@@ -1361,9 +1361,7 @@ function getStormDetail(intent, session, device, callback) {
                 buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession))
 
         // new logic added to catch condition where people are looking for current storms.
-        } else if (stormName.toLowerCase() === "florence" || stormName.toLowerCase() === "olivia" ||
-		   stormName.toLowerCase() === "helene" || stormName.toLowerCase() === "isaac" ||
-		   stormName.toLowerCase() === "paul" ) { 
+        } else if (stormName.toLowerCase() === "xxx") {
             console.log("New storm condition - read lastest from nhc");
 
             // retrieve current storm information about one of these active storms
@@ -1812,12 +1810,8 @@ function buildSlotDetail(slotName, slots) {
 		    stormDetailExists = true;
 		}
 	    }
-	    // this checks for current storm names
-	    if (slots.Storm.value.toLowerCase() === "helene" || 
-		slots.Storm.value.toLowerCase() === 'florence' ||
-	 	slots.Storm.value.toLowerCase() === 'paul' ||
-		slots.Storm.value.toLowerCase() === 'olivia' ||
-		slots.Storm.value.toLowerCase() === 'isaac') {
+	    // this checks for current storm names - currently there are none
+	    if (slots.Storm.value.toLowerCase() === "xxxyyy") { 
 		console.log("Can Fulfill Reqest for current storm " + slots.Storm.value);
 		stormDetailExists = true;
 	    }
