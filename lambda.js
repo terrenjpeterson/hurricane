@@ -1361,7 +1361,7 @@ function getStormDetail(intent, session, device, callback) {
                 buildSpeechletResponse(cardTitle, speechOutput, cardOutput, repromptText, device, shouldEndSession))
 
         // new logic added to catch condition where people are looking for current storms.
-        } else if (stormName.toLowerCase() === "xxx") {
+        } else if (stormName.toLowerCase() === "rosa") {
             console.log("New storm condition - read lastest from nhc");
 
             // retrieve current storm information about one of these active storms
@@ -1811,7 +1811,7 @@ function buildSlotDetail(slotName, slots) {
 		}
 	    }
 	    // this checks for current storm names - currently there are none
-	    if (slots.Storm.value.toLowerCase() === "xxxyyy") { 
+	    if (slots.Storm.value.toLowerCase() === "rosa") { 
 		console.log("Can Fulfill Reqest for current storm " + slots.Storm.value);
 		stormDetailExists = true;
 	    }
