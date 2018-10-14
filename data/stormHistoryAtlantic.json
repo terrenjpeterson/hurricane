@@ -12,6 +12,17 @@
                          "financialDamage":"estimated at $19 billion",
                          "peakWinds":140,
                          "hurrEnd":"September 19"
+                        },
+                        {"stormName":"Michael",
+                         "stormType":"Hurricane",
+                         "scale":"Category 4",
+                         "tropStormStart":"October 6",
+                         "hurrStart":"October 8",
+                         "landfall":true,
+                         "initialLandfallLocation":"Mexico Beach, Florida",
+                         "financialDamage":"estimated at $8 billion",
+                         "peakWinds":155,
+                         "hurrEnd":"October 12"
                         }
 		]
 	},

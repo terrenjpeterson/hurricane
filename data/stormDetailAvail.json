@@ -27,6 +27,7 @@
             {"stormName":"Harvey", "ocean":"Atlantic", "stormYear":2017},
             {"stormName":"Irma", "ocean":"Atlantic", "stormYear":2017},
             {"stormName":"Maria", "ocean":"Atlantic", "stormYear":2017},
-	    {"stormName":"Florence", "ocean":"Atlantic", "stormYear":2018 }
+	    {"stormName":"Florence", "ocean":"Atlantic", "stormYear":2018 },
+            {"stormName":"Michael", "ocean":"Atlantic", "stormYear":2018 }
 ]
 
