@@ -14,8 +14,8 @@ aws s3 cp lambda.js s3://hurricane-data/binary/
 rm hurricane.zip
 
 # set which lambda function is being updated
-lambdaruntime='hurricaneSkillGreen'
-#lambdaruntime='hurricaneSkillBlue'
+#lambdaruntime='hurricaneSkillGreen'
+lambdaruntime='hurricaneSkillBlue'
 echo 'deploying new function to' $lambdaruntime
 
 # update the lambda function with the binaries that have been staged
