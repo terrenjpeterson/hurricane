@@ -1,5 +1,5 @@
 /**
- * This skill provides details about hurricanes through 2019, both prior years as well as current
+ * This skill provides details about hurricanes through 2020, both prior years as well as current
  */
 
 var aws = require('aws-sdk');
@@ -8,8 +8,8 @@ var aws = require('aws-sdk');
 const APP_ID = 'amzn1.echo-sdk-ams.app.709af9ef-d5eb-48dd-a90a-0dc48dc822d6';
 
 // Get this years storm names
-const atlanticStorms = require("data/atlantic2019.json");
-const pacificStorms = require("data/pacific2019.json");
+const atlanticStorms = require("data/atlantic2020.json");
+const pacificStorms = require("data/pacific2020.json");
 
 // current years storm names that have already occurred
 const currYearStormArray = require("data/currStormData.json");
@@ -153,9 +153,9 @@ function onIntent(intentRequest, session, context, callback) {
         getStormNames(intent, session, device, callback);
     } else if ("SetOceanPreference" === intentName) {
         setOceanInSession(intent, session, device, callback);
-    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2019) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value == 2020) {
         getCurrentYearHistory(intent, session, device, callback);
-    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2019) {
+    } else if ("StormsFromPriorYears" == intentName && intent.slots.Date.value != 2020) {
         getWhichYear(intent, session, device, callback);
     } else if ("ThisYearsStorms" === intentName || "AMAZON.YesIntent" === intentName) {
         console.log("Intent Name: " + intentName + " From: " + country);
@@ -748,12 +748,12 @@ function getStormNames(intent, session, device, callback) {
         buildSpeechletResponse(cardTitle, speechOutput, speechOutput, repromptText, device, shouldEndSession));
 }
 
-// This highlights the summary of storms for the current year - 2019
+// This highlights the summary of storms for the current year - 2020
 function getCurrentYearHistory(intent, session, device, callback) {
     var oceanPreference;
     var sessionAttributes = {};
     var shouldEndSession = false;
-    var cardTitle = "Storm History for 2019";
+    var cardTitle = "Storm History for 2020";
 
     console.log("Get Current Year History");
 
@@ -838,7 +838,7 @@ function getWhichYear(intent, session, device, callback) {
     if (intent.slots.Date.value) {
         requestYear = intent.slots.Date.value;
         cardTitle = "Storm History for " + requestYear;
-        if (requestYear > 1990 && requestYear < 2019) {
+        if (requestYear > 1990 && requestYear < 2020) {
             
             var s3 = new aws.S3();
             
@@ -934,10 +934,10 @@ function getWhichYear(intent, session, device, callback) {
             console.log('Year selected for storm history outside of available data');
 
             speechOutput = "Sorry, I don't have information for " + requestYear + ". " +
-                "I do have information on storms between 1991 and 2019.  Please let me " +
+                "I do have information on storms between 1991 and 2020.  Please let me " +
                 "know which year I can provide within that range.";
 
-            repromptText = "Please state a year between 1991 and 2019. " +
+            repromptText = "Please state a year between 1991 and 2020. " +
                 "For example, say Storms for 2012.";
 
             callback(sessionAttributes,
@@ -965,7 +965,7 @@ function getThisYearStorm(intent, session, device, callback) {
     var sessionAttributes = {};
     var speechOutput = "";
     var cardOutput = "";
-    var cardTitle = "Storm Information for 2019";
+    var cardTitle = "Storm Information for 2020";
 
     if (session.attributes) {
         oceanPreference = session.attributes.ocean;
@@ -1054,7 +1054,7 @@ function replyActiveStorms(storms, returnData, intent, session, device, callback
     var sessionAttributes = {};
         sessionAttributes.lastRequest = "ActiveStorms";
     var cardOutput = "";
-    var cardTitle = "Storm Information for 2019";
+    var cardTitle = "Storm Information for 2020";
     var activeStorms = [];
     
     if (session.attributes) {
@@ -1215,7 +1215,7 @@ function getCompleteList(intent, session, device, callback) {
         repromptText = "Please let me know which storm I can provide information on by saying " +
             "Atlantic Ocean or Pacific Ocean.";
     } else {
-        speechOutput = speechOutput + "The 2019 storm names for the " + oceanPreference + " Ocean will be ";
+        speechOutput = speechOutput + "The 2020 storm names for the " + oceanPreference + " Ocean will be ";
         if (oceanPreference == "Atlantic") 
             currentYearStorms = atlanticStorms[0];
         else
@@ -1721,7 +1721,7 @@ function buildSlotDetail(slotName, slots) {
 	};
     } else if (slotName === "Date") {
 	// validate that the date of the storm is in the last thirty years
-        if (slots.Date.value > 1990 && slots.Date.value < 2019) {
+        if (slots.Date.value > 1990 && slots.Date.value < 2020) {
             return {
                 "Date": {
                     "canUnderstand": "YES",
